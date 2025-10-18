@@ -1,0 +1,19 @@
+# Dependencies
+/node_modules
+/client/node_modules
+
+# IDEs
+.idea/
+
+# Environment variables
+.env
+
+# Build artifacts
+/build
+/dist
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log
+yarn-debug.log
