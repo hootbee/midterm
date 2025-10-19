@@ -10,8 +10,12 @@ function SignUp() {
           <input type="text" id="name" name="name" />
         </div>
         <div style={{ marginTop: '10px' }}>
-          <label htmlFor="age">나이: </label>
-          <input type="number" id="age" name="age" />
+          <label htmlFor="email">이메일: </label>
+          <input type="email" id="email" name="email" />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label htmlFor="studentId">학번: </label>
+          <input type="text" id="studentId" name="studentId" />
         </div>
         <div style={{ marginTop: '10px' }}>
           <label htmlFor="username">ID: </label>
