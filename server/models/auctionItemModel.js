@@ -29,6 +29,21 @@ const auctionItemSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  currentPrice: {
+    type: Number,
+    required: true,
+  },
+  highestBidderUuid: {
+    type: String,
+    default: null,
+  },
+  bids: [
+    {
+      bidderUuid: String,
+      amount: Number,
+      timestamp: { type: Date, default: Date.now },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,

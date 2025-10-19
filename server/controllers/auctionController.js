@@ -34,6 +34,7 @@ const createAuctionItem = async (req, res) => {
       sellerEmail: email,
       sellerUuid: uuid,
       sellerReputationScore: seller.reputation_score, // Add the score
+      currentPrice: startPrice, // Set initial current price
     });
 
     const savedItem = await newItem.save();
