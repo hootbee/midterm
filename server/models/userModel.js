@@ -7,21 +7,20 @@ const createUsersTable = async () => {
   let conn;
   try {
     conn = await pool.getConnection();
-    console.log('Force-refreshing "users" table schema...');
-    await conn.query('DROP TABLE IF EXISTS users;');
     await conn.query(`
-      CREATE TABLE users (
+      CREATE TABLE IF NOT EXISTS users (
         email VARCHAR(255) PRIMARY KEY,
         uuid VARCHAR(36) NOT NULL UNIQUE,
         name VARCHAR(255) NOT NULL,
         student_id VARCHAR(255) NOT NULL,
         password VARCHAR(255) NOT NULL,
+        reputation_score INT NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("Table 'users' has been recreated with the correct schema.");
+    console.log("Table 'users' is ready.");
   } catch (err) {
-    console.error("Error recreating 'users' table:", err);
+    console.error("Error ensuring 'users' table exists:", err);
   } finally {
     if (conn) conn.release();
   }
@@ -64,8 +63,21 @@ const createUser = async (userData) => {
   }
 };
 
+const findUserByEmail = async (email) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'SELECT * FROM users WHERE email = ?';
+    const rows = await conn.query(query, [email]);
+    return rows[0]; // Return the first user found, or undefined
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   createUsersTable,
   findUserByEmailOrStudentId,
   createUser,
+  findUserByEmail,
 };
