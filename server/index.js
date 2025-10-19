@@ -1,18 +1,29 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const connectMongo = require('./config/mongo');
 const { createUsersTable } = require('./models/userModel');
+const initializeSocket = require('./socket');
 const userRoutes = require('./routes/userRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
 
-// Initialize Express app
+// Initialize
 const app = express();
 const port = 3001;
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000", // Allow requests from the React client
+    methods: ["GET", "POST"]
+  }
+});
 
-// Middleware to parse JSON bodies
+// Initialize Socket.IO logic
+initializeSocket(io);
+
+// Middleware
 app.use(express.json());
-
-// Serve static files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
 
 // Initialize Databases
@@ -29,6 +40,6 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Backend server listening at http://localhost:${port}`);
+httpServer.listen(port, () => {
+  console.log(`Backend server with Socket.IO listening at http://localhost:${port}`);
 });
