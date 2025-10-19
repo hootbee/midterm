@@ -1,4 +1,3 @@
-require('dotenv').config({ path: './.env' });
 const mariadb = require('mariadb');
 
 const pool = mariadb.createPool({
