@@ -18,10 +18,6 @@ function SignUp() {
           <input type="text" id="studentId" name="studentId" />
         </div>
         <div style={{ marginTop: '10px' }}>
-          <label htmlFor="username">ID: </label>
-          <input type="text" id="username" name="username" />
-        </div>
-        <div style={{ marginTop: '10px' }}>
           <label htmlFor="password">비밀번호: </label>
           <input type="password" id="password" name="password" />
         </div>
