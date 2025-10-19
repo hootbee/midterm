@@ -1,36 +1,27 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import './App.css';
+import Home from './Home';
 import Login from './Login';
 import SignUp from './SignUp';
+import AuctionHouse from './AuctionHouse';
+import AuctionItemDetail from './AuctionItemDetail';
 
 function App() {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignUp, setShowSignUp] = useState(false);
-
-  const handleShowLogin = () => {
-    setShowLogin(true);
-    setShowSignUp(false);
-  };
-
-  const handleShowSignUp = () => {
-    setShowLogin(false);
-    setShowSignUp(true);
-  };
-
   return (
     <div className="App">
       <header className="App-header">
-        {showLogin ? (
-          <Login />
-        ) : showSignUp ? (
-          <SignUp />
-        ) : (
-          <div>
-            <button onClick={handleShowLogin}>로그인</button>
-            <button onClick={handleShowSignUp} style={{ marginLeft: '10px' }}>회원가입</button>
-          </div>
-        )}
+        <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
+          <Link to="/"><button>메인화면으로 가기</button></Link>
+        </div>
+        
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/auction" element={<AuctionHouse />} />
+          <Route path="/auction/:id" element={<AuctionItemDetail />} />
+        </Routes>
       </header>
     </div>
   );
