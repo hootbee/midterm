@@ -1,4 +1,6 @@
-const { findUserByEmailOrStudentId, createUser } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail } = require('../models/userModel');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // @desc    Register a new user
 // @route   POST /api/users/signup
@@ -44,6 +46,54 @@ const signup = async (req, res) => {
   }
 };
 
+// @desc    Authenticate a user
+// @route   POST /api/users/login
+// @access  Public
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password.' });
+    }
+
+    // 2. Find user by email
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials.' });
+    }
+
+    // 3. Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials.' });
+    }
+
+    // 4. Create and sign JWT
+    const payload = {
+      uuid: user.uuid,
+      email: user.email,
+      name: user.name,
+    };
+
+    const token = jwt.sign(payload, 'a1b2c3d4e5f6!@#$%^', {
+      expiresIn: '1h', // Token expires in 1 hour
+    });
+
+    // 5. Respond with token
+    res.json({
+      message: 'Logged in successfully!',
+      token: token,
+    });
+
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ message: 'Server error during login.' });
+  }
+};
+
 module.exports = {
   signup,
+  login,
 };
