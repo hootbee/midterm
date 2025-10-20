@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -34,5 +34,10 @@ router.get('/:id', getAuctionItemById);
 // @desc    Download an item file after winning
 // @access  Private
 router.get('/:id/download', authMiddleware, downloadItemFile);
+
+// @route   DELETE /api/auctions/:id
+// @desc    Delete an auction item
+// @access  Private
+router.delete('/:id', authMiddleware, deleteAuctionItem);
 
 module.exports = router;

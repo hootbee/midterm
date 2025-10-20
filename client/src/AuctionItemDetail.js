@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode';
 
@@ -30,6 +30,7 @@ function AuctionItemDetail() {
   const [bidAmount, setBidAmount] = useState('');
   const { id } = useParams();
   const socketRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -74,6 +75,32 @@ function AuctionItemDetail() {
     e.preventDefault();
     if (socketRef.current) {
       socketRef.current.emit('new_bid', { itemId: id, bidAmount: Number(bidAmount) });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말로 이 경매를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/auctions/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        alert('경매가 삭제되었습니다.');
+        navigate('/');
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      alert(`삭제 오류: ${err.message}`);
     }
   };
 
@@ -170,7 +197,12 @@ function AuctionItemDetail() {
         </div>
       )}
 
-      {isSeller && <p>자신이 등록한 물품입니다.</p>}
+      {isSeller && (
+        <div>
+          <p>자신이 등록한 물품입니다.</p>
+          <button onClick={handleDelete} style={{ backgroundColor: 'red', color: 'white' }}>삭제하기</button>
+        </div>
+      )}
       {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
       {isAuctionOver && !isWinner && <p>경매가 종료되었습니다.</p>}
 

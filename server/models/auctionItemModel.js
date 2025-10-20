@@ -72,8 +72,14 @@ const findById = async (id) => {
   return await AuctionItem.findById(id);
 };
 
+// Function to delete an auction item by ID
+const deleteById = async (id) => {
+  return await AuctionItem.findByIdAndDelete(id);
+};
+
 module.exports = {
   AuctionItem,
   findAllAuctionItems,
   findById,
+  deleteById,
 };

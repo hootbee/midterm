@@ -1,5 +1,7 @@
-const { AuctionItem, findAllAuctionItems, findById } = require('../models/auctionItemModel');
+const { AuctionItem, findAllAuctionItems, findById, deleteById } = require('../models/auctionItemModel');
 const { findUserByEmail } = require('../models/userModel');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Create a new auction item
 // @route   POST /api/auctions
@@ -126,9 +128,47 @@ const downloadItemFile = async (req, res) => {
   }
 };
 
+// @desc    Delete an auction item
+// @route   DELETE /api/auctions/:id
+// @access  Private (owner only)
+const deleteAuctionItem = async (req, res) => {
+  try {
+    const item = await findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    // Check if the user is the owner of the auction item
+    if (item.sellerUuid !== req.user.uuid) {
+      return res.status(403).json({ message: 'User not authorized to delete this item' });
+    }
+
+    // Delete the files from the filesystem
+    const imagePath = path.resolve(item.imagePath);
+    const filePath = path.resolve(item.filePath);
+
+    fs.unlink(imagePath, (err) => {
+      if (err) console.error('Error deleting image file:', err);
+    });
+
+    fs.unlink(filePath, (err) => {
+      if (err) console.error('Error deleting item file:', err);
+    });
+
+    await deleteById(req.params.id);
+
+    res.json({ message: 'Auction item removed' });
+  } catch (error) {
+    console.error('Error deleting auction item:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
   getAuctionItemById,
   downloadItemFile,
+  deleteAuctionItem,
 };

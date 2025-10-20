@@ -55,6 +55,7 @@ const startServer = async () => {
   connectMongo(); // For MongoDB
 
   // API Routes
+  app.get('/api/test', (req, res) => res.send('Test route works!'));
   app.use('/api/users', userRoutes);
   app.use('/api/auctions', auctionRoutes);
 
