@@ -50,8 +50,16 @@ const createAuctionItem = async (req, res) => {
 
 const getAuctionItems = async (req, res) => {
   try {
-    const items = await findAllAuctionItems();
-    res.json(items);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const { items, totalItems } = await findAllAuctionItems({ page, limit });
+
+    res.json({
+      items,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    });
   } catch (error) {
     console.error('Error fetching auction items:', error);
     res.status(500).json({ message: 'Server error' });

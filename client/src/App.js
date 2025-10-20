@@ -4,7 +4,6 @@ import './App.css';
 import Home from './Home';
 import Login from './Login';
 import SignUp from './SignUp';
-import AuctionHouse from './AuctionHouse';
 import AuctionItemDetail from './AuctionItemDetail';
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/auction" element={<AuctionHouse />} />
           <Route path="/auction/:id" element={<AuctionItemDetail />} />
         </Routes>
       </header>
