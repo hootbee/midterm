@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login } = require('../controllers/userController');
+const { signup, login, searchUserByUuid } = require('../controllers/userController');
+const authMiddleware = require('../middleware/authMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware');
 
 router.post('/signup', signup);
 router.post('/login', login);
+
+// @route   GET /api/users/search/:uuid
+// @desc    Search for a user by UUID (Admin only)
+// @access  Admin
+router.get('/search/:uuid', authMiddleware, adminMiddleware, searchUserByUuid);
 
 module.exports = router;

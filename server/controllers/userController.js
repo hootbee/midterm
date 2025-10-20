@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -50,23 +50,29 @@ const signup = async (req, res) => {
 // @route   POST /api/users/login
 // @access  Public
 const login = async (req, res) => {
+  console.log('Login attempt with body:', req.body);
   try {
     const { email, password } = req.body;
 
     // 1. Validate input
     if (!email || !password) {
+      console.log('Login Error: Missing email or password.');
       return res.status(400).json({ message: 'Please provide email and password.' });
     }
 
     // 2. Find user by email
     const user = await findUserByEmail(email);
+    console.log('User found in database:', user);
     if (!user) {
+      console.log('Login Error: User not found.');
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
     // 3. Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
     if (!isMatch) {
+      console.log('Login Error: Password does not match.');
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
@@ -83,6 +89,7 @@ const login = async (req, res) => {
     });
 
     // 5. Respond with token
+    console.log('Login successful, sending token.');
     res.json({
       message: 'Logged in successfully!',
       token: token,
@@ -94,7 +101,27 @@ const login = async (req, res) => {
   }
 };
 
+// @desc    Search for a user by UUID
+// @route   GET /api/users/search/:uuid
+// @access  Admin
+const searchUserByUuid = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const user = await findUserByUuid(uuid);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error searching for user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  searchUserByUuid,
 };

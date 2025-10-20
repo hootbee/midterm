@@ -120,10 +120,23 @@ const logBid = async (bidData) => {
   }
 };
 
+const findUserByUuid = async (uuid) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'SELECT email, uuid, name, student_id, reputation_score, created_at FROM users WHERE uuid = ?';
+    const rows = await conn.query(query, [uuid]);
+    return rows[0]; // Return the first user found, or undefined
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
   createUser,
   findUserByEmail,
   logBid,
+  findUserByUuid,
 };
