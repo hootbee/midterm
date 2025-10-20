@@ -199,17 +199,37 @@ function AuctionView() {
 
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const decodeToken = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
+      const decoded = decodeToken(token);
+      if (decoded && decoded.admin) {
+        setIsAdmin(true);
+      }
     }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
+    setIsAdmin(false);
     alert('로그아웃 되었습니다.');
   };
 
@@ -217,7 +237,12 @@ function Home() {
     <div>
       <h1>메인 화면</h1>
       {isLoggedIn ? (
-        <button onClick={handleLogout}>로그아웃</button>
+        <>
+          <button onClick={handleLogout}>로그아웃</button>
+          {isAdmin && (
+            <Link to="/admin"><button style={{ marginLeft: '10px' }}>관리자 페이지</button></Link>
+          )}
+        </>
       ) : (
         <>
           <Link to="/login"><button>로그인</button></Link>

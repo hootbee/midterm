@@ -75,6 +75,7 @@ const login = async (req, res) => {
       uuid: user.uuid,
       email: user.email,
       name: user.name,
+      admin: user.admin, // Include admin status in the token
     };
 
     const token = jwt.sign(payload, 'a1b2c3d4e5f6!@#$%^', {

@@ -46,7 +46,7 @@ function Login() {
       <form onSubmit={onSubmit}>
         <div>
           <label htmlFor="email">이메일: </label>
-          <input type="email" id="email" name="email" value={email} onChange={onChange} required />
+          <input type="text" id="email" name="email" value={email} onChange={onChange} required />
         </div>
         <div style={{ marginTop: '10px' }}>
           <label htmlFor="password">비밀번호: </label>

@@ -18,6 +18,24 @@ const initializeMariaDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Check if the admin column exists
+    const [adminColumn] = await conn.query(
+      `SELECT * 
+       FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = '202121134' 
+       AND TABLE_NAME = 'users' 
+       AND COLUMN_NAME = 'admin';`
+    );
+
+    if (!adminColumn) {
+      console.log("'users' table is missing the 'admin' column, adding it...");
+      await conn.query("ALTER TABLE users ADD COLUMN admin BOOLEAN NOT NULL DEFAULT FALSE;");
+      console.log("'admin' column added successfully.");
+    } else {
+      console.log("'admin' column already exists in 'users' table.");
+    }
+
     await conn.query(`
       CREATE TABLE IF NOT EXISTS bid_logs (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -52,7 +70,7 @@ const findUserByEmailOrStudentId = async (email, studentId) => {
 // Function to create a new user
 const createUser = async (userData) => {
   let conn;
-  const { name, email, student_id, password } = userData;
+  const { name, email, student_id, password, admin = false } = userData; // Default admin to false
 
   try {
     conn = await pool.getConnection();
@@ -64,10 +82,10 @@ const createUser = async (userData) => {
     // Generate UUID
     const newUserUUID = uuidv4();
 
-    const query = 'INSERT INTO users (name, email, student_id, password, uuid) VALUES (?, ?, ?, ?, ?)';
-    const result = await conn.query(query, [name, email, student_id, hashedPassword, newUserUUID]);
+    const query = 'INSERT INTO users (name, email, student_id, password, uuid, admin) VALUES (?, ?, ?, ?, ?, ?)';
+    const result = await conn.query(query, [name, email, student_id, hashedPassword, newUserUUID, admin]);
     
-    return { email, name, uuid: newUserUUID }; // Return some info about the created user
+    return { email, name, uuid: newUserUUID, admin }; // Return some info about the created user
   } finally {
     if (conn) conn.release();
   }
