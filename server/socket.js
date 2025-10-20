@@ -1,5 +1,6 @@
 const socketAuthMiddleware = require('./middleware/socketAuthMiddleware');
 const { AuctionItem, findById } = require('./models/auctionItemModel');
+const { logBid } = require('./models/userModel');
 
 function initializeSocket(io) {
   io.use(socketAuthMiddleware); // Apply the auth middleware to all connections
@@ -48,6 +49,14 @@ function initializeSocket(io) {
         
         const updatedItem = await item.save();
         console.log(`New bid of ${bidAmount} for item ${itemId} by ${user.email}`);
+
+        // --- Log bid to MariaDB for audit ---
+        await logBid({
+          auction_item_id: itemId,
+          seller_uuid: item.sellerUuid,
+          bidder_uuid: user.uuid,
+          bid_amount: bidAmount,
+        });
 
         // --- Broadcast update to all in the room ---
         io.to(itemId).emit('bid_update', updatedItem);

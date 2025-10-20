@@ -9,9 +9,9 @@ const createAuctionItem = async (req, res) => {
     const { title, startPrice, endTime } = req.body;
     const { email, uuid } = req.user; // Get user info from the token payload (set by authMiddleware)
 
-    // Check if file was uploaded
-    if (!req.file) {
-      return res.status(400).json({ message: 'Please upload a file.' });
+    // Check if files were uploaded
+    if (!req.files || !req.files.photo || !req.files.itemFile) {
+      return res.status(400).json({ message: 'Please upload both a thumbnail photo and an item file.' });
     }
 
     // Basic validation
@@ -30,11 +30,12 @@ const createAuctionItem = async (req, res) => {
       title,
       startPrice,
       endTime,
-      imagePath: req.file.path, // Get file path from multer
+      imagePath: `uploads/${req.files.photo[0].filename}`,
+      filePath: `private_uploads/${req.files.itemFile[0].filename}`,
       sellerEmail: email,
       sellerUuid: uuid,
-      sellerReputationScore: seller.reputation_score, // Add the score
-      currentPrice: startPrice, // Set initial current price
+      sellerReputationScore: seller.reputation_score,
+      currentPrice: startPrice,
     });
 
     const savedItem = await newItem.save();
@@ -78,8 +79,48 @@ const getAuctionItemById = async (req, res) => {
   }
 };
 
+// @desc    Download the file for a won auction
+// @route   GET /api/auctions/:id/download
+// @access  Private
+const downloadItemFile = async (req, res) => {
+  try {
+    const item = await findById(req.params.id);
+
+    // 1. Check if item exists
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    // 2. Check if auction has ended
+    if (new Date() < new Date(item.endTime)) {
+      return res.status(403).json({ message: 'Auction has not ended yet.' });
+    }
+
+    // 3. Check if user is the winner
+    if (req.user.uuid !== item.highestBidderUuid) {
+      return res.status(403).json({ message: 'You are not the winner of this auction.' });
+    }
+
+    // 4. Send the file for download
+    const path = require('path');
+    const filePath = path.resolve(item.filePath);
+    
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error('File download error:', err);
+        res.status(500).send({ message: 'Could not download the file.' });
+      }
+    });
+
+  } catch (error) {
+    console.error('Error downloading item file:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
   getAuctionItemById,
+  downloadItemFile,
 };

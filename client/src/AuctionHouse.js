@@ -38,6 +38,7 @@ function AuctionHouse() {
     const [startPrice, setStartPrice] = useState('');
     const [endTime, setEndTime] = useState('');
     const [photo, setPhoto] = useState(null);
+    const [itemFile, setItemFile] = useState(null); // State for the item file
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -48,13 +49,15 @@ function AuctionHouse() {
         return;
       }
 
-      if (!photo || !title || !startPrice || !endTime) {
+      // Updated validation
+      if (!photo || !itemFile || !title || !startPrice || !endTime) {
         alert('모든 필드를 채워주세요.');
         return;
       }
 
       const formData = new FormData();
-      formData.append('photo', photo);
+      formData.append('photo', photo); // The thumbnail
+      formData.append('itemFile', itemFile); // The actual file
       formData.append('title', title);
       formData.append('startPrice', startPrice);
       formData.append('endTime', endTime);
@@ -65,14 +68,14 @@ function AuctionHouse() {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
-          body: formData, // Let the browser set the Content-Type for multipart/form-data
+          body: formData,
         });
 
         const data = await res.json();
 
         if (res.ok) {
           alert('경매 아이템이 성공적으로 등록되었습니다!');
-          setShowCreateForm(false); // Go back to the list view
+          setShowCreateForm(false);
         } else {
           alert('등록 실패: ' + data.message);
         }
@@ -87,26 +90,38 @@ function AuctionHouse() {
         <h2>경매 물품 등록</h2>
         <form onSubmit={handleSubmit}>
           <div style={formInputStyle}>
-            <label htmlFor="photo">사진 업로드 (jpg, png, pdf): </label>
+            <label htmlFor="photo">썸네일 사진 (jpg, png): </label>
             <input 
               type="file" 
               id="photo" 
               name="photo" 
-              accept=".jpg, .jpeg, .png, .pdf" 
+              accept=".jpg, .jpeg, .png" 
               onChange={(e) => setPhoto(e.target.files[0])} 
+              required
+            />
+          </div>
+          <div style={formInputStyle}>
+            <label htmlFor="itemFile">경매 파일 (jpg, png, pdf): </label>
+            <input 
+              type="file" 
+              id="itemFile" 
+              name="itemFile" 
+              accept=".jpg, .jpeg, .png, .pdf" 
+              onChange={(e) => setItemFile(e.target.files[0])} 
+              required
             />
           </div>
           <div style={formInputStyle}>
             <label htmlFor="title">제목: </label>
-            <input type="text" id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input type="text" id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
           <div style={formInputStyle}>
             <label htmlFor="startPrice">경매 시작가: </label>
-            <input type="number" id="startPrice" name="startPrice" value={startPrice} onChange={(e) => setStartPrice(e.target.value)} />
+            <input type="number" id="startPrice" name="startPrice" value={startPrice} onChange={(e) => setStartPrice(e.target.value)} required />
           </div>
           <div style={formInputStyle}>
             <label htmlFor="endTime">마감 시간: </label>
-            <input type="datetime-local" id="endTime" name="endTime" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            <input type="datetime-local" id="endTime" name="endTime" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
           </div>
           <div style={{ marginTop: '20px' }}>
             <button type="submit">등록하기</button>

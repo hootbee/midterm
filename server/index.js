@@ -1,9 +1,10 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectMongo = require('./config/mongo');
-const { createUsersTable } = require('./models/userModel');
+const { initializeMariaDB } = require('./models/userModel');
 const initializeSocket = require('./socket');
 const userRoutes = require('./routes/userRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
@@ -22,12 +23,15 @@ const io = new Server(httpServer, {
 // Initialize Socket.IO logic
 initializeSocket(io);
 
+
+// ... (other imports) ...
+
 // Middleware
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Use absolute path
 
 // Initialize Databases
-createUsersTable(); // For MariaDB
+initializeMariaDB(); // For MariaDB
 connectMongo(); // For MongoDB
 
 // API Routes

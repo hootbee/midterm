@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -10,7 +10,10 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/', authMiddleware, (req, res) => {
   upload(req, res, (err) => {
     if (err) {
-      return res.status(400).json({ message: err });
+      // Ensure a string message is sent for client-side alerts.
+      const errorMessage = (typeof err === 'string') ? err : (err.message || 'File upload error');
+      console.error('Multer Error:', errorMessage); // Also log the specific error on the server
+      return res.status(400).json({ message: errorMessage });
     }
     // If file upload is successful, call the controller
     createAuctionItem(req, res);
@@ -26,5 +29,10 @@ router.get('/', getAuctionItems);
 // @desc    Get single auction item
 // @access  Public
 router.get('/:id', getAuctionItemById);
+
+// @route   GET /api/auctions/:id/download
+// @desc    Download an item file after winning
+// @access  Private
+router.get('/:id/download', authMiddleware, downloadItemFile);
 
 module.exports = router;

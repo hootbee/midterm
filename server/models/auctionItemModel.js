@@ -9,6 +9,10 @@ const auctionItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  filePath: { // Storing the path to the protected auction file
+    type: String,
+    required: true,
+  },
   startPrice: {
     type: Number,
     required: true,
