@@ -28,6 +28,7 @@ function AuctionItemDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
   const { id } = useParams();
   const socketRef = useRef(null);
   const navigate = useNavigate();
@@ -144,6 +145,33 @@ function AuctionItemDetail() {
     }
   };
 
+  const handleUpdate = async (e, updatedData) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/auctions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (res.ok) {
+        const updatedItem = await res.json();
+        setItem(updatedItem);
+        setIsEditMode(false);
+        alert('경매 정보가 수정되었습니다.');
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '수정에 실패했습니다.');
+      }
+    } catch (err) {
+      alert(`수정 오류: ${err.message}`);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!item) return <div>Item not found.</div>;
@@ -163,6 +191,10 @@ function AuctionItemDetail() {
   const isAuctionOver = new Date() > new Date(item.endTime);
   const isWinner = isAuctionOver && item.highestBidderUuid === currentUserUuid;
   const canBid = token && !isSeller && !isAuctionOver;
+
+  if (isEditMode) {
+    return <EditForm item={item} onUpdate={handleUpdate} onCancel={() => setIsEditMode(false)} />;
+  }
 
   return (
     <div style={detailContainerStyle}>
@@ -200,7 +232,9 @@ function AuctionItemDetail() {
       {isSeller && (
         <div>
           <p>자신이 등록한 물품입니다.</p>
-          <button onClick={handleDelete} style={{ backgroundColor: 'red', color: 'white' }}>삭제하기</button>
+          <button onClick={() => setIsEditMode(true)}>수정하기</button>
+          <button onClick={handleDelete} style={{ backgroundColor: 'red', color: 'white', marginLeft: '10px' }}>삭제하기</button>
+          <button onClick={() => alert('신고 기능은 아직 구현되지 않았습니다.')} style={{ marginLeft: '10px' }}>신고하기</button>
         </div>
       )}
       {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
@@ -219,5 +253,41 @@ function AuctionItemDetail() {
     </div>
   );
 }
+
+const EditForm = ({ item, onUpdate, onCancel }) => {
+  const [formData, setFormData] = useState({
+    title: item.title,
+    startPrice: item.startPrice,
+    endTime: new Date(item.endTime).toISOString().slice(0, 16),
+  });
+
+  const onChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>경매 정보 수정</h2>
+      <form onSubmit={(e) => onUpdate(e, formData)}>
+        <div>
+          <label>제목: </label>
+          <input type="text" name="title" value={formData.title} onChange={onChange} required />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>경매 시작가: </label>
+          <input type="number" name="startPrice" value={formData.startPrice} onChange={onChange} required />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>마감 시간: </label>
+          <input type="datetime-local" name="endTime" value={formData.endTime} onChange={onChange} required />
+        </div>
+        <div style={{ marginTop: '20px' }}>
+          <button type="submit">수정 완료</button>
+          <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>취소</button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 export default AuctionItemDetail;

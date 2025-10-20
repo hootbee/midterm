@@ -77,9 +77,15 @@ const deleteById = async (id) => {
   return await AuctionItem.findByIdAndDelete(id);
 };
 
+// Function to update an auction item by ID
+const updateById = async (id, updateData) => {
+  return await AuctionItem.findByIdAndUpdate(id, updateData, { new: true }); // { new: true } returns the updated document
+};
+
 module.exports = {
   AuctionItem,
   findAllAuctionItems,
   findById,
   deleteById,
+  updateById,
 };

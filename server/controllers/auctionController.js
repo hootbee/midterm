@@ -1,4 +1,4 @@
-const { AuctionItem, findAllAuctionItems, findById, deleteById } = require('../models/auctionItemModel');
+const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById } = require('../models/auctionItemModel');
 const { findUserByEmail } = require('../models/userModel');
 const fs = require('fs');
 const path = require('path');
@@ -165,10 +165,43 @@ const deleteAuctionItem = async (req, res) => {
   }
 };
 
+// @desc    Update an auction item
+// @route   PUT /api/auctions/:id
+// @access  Private (owner only)
+const updateAuctionItem = async (req, res) => {
+  try {
+    const item = await findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    // Check if the user is the owner of the auction item
+    if (item.sellerUuid !== req.user.uuid) {
+      return res.status(403).json({ message: 'User not authorized to update this item' });
+    }
+
+    // For now, only update text fields. File updates can be added later.
+    const { title, startPrice, endTime } = req.body;
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (startPrice) updateData.startPrice = startPrice;
+    if (endTime) updateData.endTime = endTime;
+
+    const updatedItem = await updateById(req.params.id, updateData);
+
+    res.json(updatedItem);
+  } catch (error) {
+    console.error('Error updating auction item:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
   getAuctionItemById,
   downloadItemFile,
   deleteAuctionItem,
+  updateAuctionItem,
 };
