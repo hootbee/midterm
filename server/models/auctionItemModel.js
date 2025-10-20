@@ -57,9 +57,14 @@ const auctionItemSchema = new mongoose.Schema({
 const AuctionItem = mongoose.model('AuctionItem', auctionItemSchema);
 
 // Function to find all auction items
-const findAllAuctionItems = async () => {
-  // Sort by newest first
-  return await AuctionItem.find().sort({ createdAt: -1 });
+const findAllAuctionItems = async ({ page, limit }) => {
+  const skip = (page - 1) * limit;
+  const totalItems = await AuctionItem.countDocuments();
+  const items = await AuctionItem.find()
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+  return { items, totalItems };
 };
 
 // Function to find a single auction item by ID
