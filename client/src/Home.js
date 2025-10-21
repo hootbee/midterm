@@ -25,183 +25,66 @@ const containerStyle = {
   justifyContent: 'center',
 };
 
-const formInputStyle = {
-  marginTop: '10px',
-};
+function ItemList() {
+  const [items, setItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-function AuctionView() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-
-  // This is now a stateful component
-  const CreateForm = () => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [startPrice, setStartPrice] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [photo, setPhoto] = useState(null);
-    const [itemFile, setItemFile] = useState(null); // State for the item file
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('로그인이 필요합니다.');
-        return;
-      }
-
-      // Updated validation
-      if (!photo || !itemFile || !title || !content || !startPrice || !endTime) {
-        alert('모든 필드를 채워주세요.');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('photo', photo); // The thumbnail
-      formData.append('itemFile', itemFile); // The actual file
-      formData.append('title', title);
-      formData.append('content', content);
-      formData.append('startPrice', startPrice);
-      formData.append('endTime', endTime);
-
+  useEffect(() => {
+    const fetchItems = async () => {
       try {
-        const res = await fetch('/api/auctions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
+        const res = await fetch(`/api/auctions?page=${currentPage}&limit=5`);
         const data = await res.json();
-
         if (res.ok) {
-          alert('경매 아이템이 성공적으로 등록되었습니다!');
-          setShowCreateForm(false);
+          setItems(data.items);
+          setTotalPages(data.totalPages);
         } else {
-          alert('등록 실패: ' + data.message);
+          console.error('Failed to fetch items:', data.message);
         }
       } catch (error) {
-        console.error('Item creation error:', error);
-        alert('아이템 등록 중 오류가 발생했습니다.');
+        console.error('Error fetching items:', error);
       }
     };
 
-    return (
-      <div>
-        <h2>경매 물품 등록</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={formInputStyle}>
-            <label htmlFor="photo">썸네일 사진 (jpg, png): </label>
-            <input 
-              type="file" 
-              id="photo" 
-              name="photo" 
-              accept=".jpg, .jpeg, .png" 
-              onChange={(e) => setPhoto(e.target.files[0])} 
-              required
-            />
-          </div>
-          <div style={formInputStyle}>
-            <label htmlFor="itemFile">경매 파일 (jpg, png, pdf): </label>
-            <input 
-              type="file" 
-              id="itemFile" 
-              name="itemFile" 
-              accept=".jpg, .jpeg, .png, .pdf" 
-              onChange={(e) => setItemFile(e.target.files[0])} 
-              required
-            />
-          </div>
-          <div style={formInputStyle}>
-            <label htmlFor="title">제목: </label>
-            <input type="text" id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-          <div style={formInputStyle}>
-            <label htmlFor="content">내용: </label>
-            <textarea id="content" name="content" value={content} onChange={(e) => setContent(e.target.value)} required style={{ width: '100%', minHeight: '200px' }} />
-          </div>
-          <div style={formInputStyle}>
-            <label htmlFor="startPrice">경매 시작가: </label>
-            <input type="number" id="startPrice" name="startPrice" value={startPrice} onChange={(e) => setStartPrice(e.target.value)} required />
-          </div>
-          <div style={formInputStyle}>
-            <label htmlFor="endTime">마감 시간: </label>
-            <input type="datetime-local" id="endTime" name="endTime" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
-          </div>
-          <div style={{ marginTop: '20px' }}>
-            <button type="submit">등록하기</button>
-            <button type="button" onClick={() => setShowCreateForm(false)} style={{ marginLeft: '10px' }}>
-              목록으로 돌아가기
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  };
+    fetchItems();
+  }, [currentPage]); // Refetch only when page changes
 
-  const ItemList = () => {
-    const [items, setItems] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-
-    useEffect(() => {
-      const fetchItems = async () => {
-        try {
-          const res = await fetch(`/api/auctions?page=${currentPage}&limit=5`);
-          const data = await res.json();
-          if (res.ok) {
-            setItems(data.items);
-            setTotalPages(data.totalPages);
-          } else {
-            console.error('Failed to fetch items:', data.message);
-          }
-        } catch (error) {
-          console.error('Error fetching items:', error);
-        }
-      };
-
-      fetchItems();
-    }, [currentPage, showCreateForm]); // Refetch when page changes or when we come back from the create form
-
-    return (
-      <div>
-        <h2>경매장</h2>
-        <button onClick={() => setShowCreateForm(true)} style={{ marginBottom: '20px' }}>작성하기</button>
-        <div style={containerStyle}>
-          {items.map(item => (
-            <Link to={`/auction/${item._id}`} key={item._id} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={itemCardStyle}>
-                <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle} />
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>판매자 평판: {item.sellerReputationScore}점</p>
-                  <p>판매자 UUID: {item.sellerUuid}</p>
-                  <p>경매 시작가: {item.startPrice.toLocaleString()}원</p>
-                  <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
-                </div>
+  return (
+    <div>
+      <h2>경매장</h2>
+      <Link to="/create-auction">
+        <button style={{ marginBottom: '20px' }}>작성하기</button>
+      </Link>
+      <div style={containerStyle}>
+        {items.map(item => (
+          <Link to={`/auction/${item._id}`} key={item._id} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={itemCardStyle}>
+              <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle} />
+              <div>
+                <h3>{item.title}</h3>
+                <p>판매자 평판: {item.sellerReputationScore}점</p>
+                <p>판매자 UUID: {item.sellerUuid}</p>
+                <p>경매 시작가: {item.startPrice.toLocaleString()}원</p>
+                <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
               </div>
-            </Link>
-          ))}
-        </div>
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
-            이전
-          </button>
-          <span style={{ margin: '0 10px' }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-            다음
-          </button>
-        </div>
+            </div>
+          </Link>
+        ))}
       </div>
-    );
-  };
-
-  return showCreateForm ? <CreateForm /> : <ItemList />;
-}
-
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+          이전
+        </button>
+        <span style={{ margin: '0 10px' }}>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+          다음
+        </button>
+      </div>
+    </div>
+  );
+};
 
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -256,7 +139,7 @@ function Home() {
           <Link to="/signup"><button style={{ marginLeft: '10px' }}>회원가입</button></Link>
         </>
       )}
-      <AuctionView />
+      <ItemList />
     </div>
   );
 }
