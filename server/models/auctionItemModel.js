@@ -41,6 +41,10 @@ const auctionItemSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  reportCount: {
+    type: Number,
+    default: 0,
+  },
   bids: [
     {
       bidderUuid: String,

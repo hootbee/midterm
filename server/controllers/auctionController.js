@@ -197,6 +197,57 @@ const updateAuctionItem = async (req, res) => {
   }
 };
 
+const Report = require('../models/reportModel');
+
+// ... (other controller functions)
+
+const reportAuctionItem = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const auctionItemId = req.params.id;
+    const reporterUuid = req.user.uuid;
+
+    if (!reason) {
+      return res.status(400).json({ message: 'A reason for the report must be provided.' });
+    }
+
+    // Check if the user has already reported this item
+    const existingReport = await Report.findOne({ auctionItemId, reporterUuid });
+    if (existingReport) {
+      return res.status(400).json({ message: 'You have already reported this item.' });
+    }
+
+    // Create a new report
+    const newReport = new Report({
+      auctionItemId,
+      reason,
+      reporterUuid,
+    });
+    await newReport.save();
+
+    // Increment the report count on the auction item
+    await AuctionItem.findByIdAndUpdate(auctionItemId, { $inc: { reportCount: 1 } });
+
+    res.status(201).json({ message: 'Report submitted successfully.' });
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get all reported auction items
+// @route   GET /api/auctions/reported
+// @access  Admin
+const getReportedItems = async (req, res) => {
+  try {
+    const items = await AuctionItem.find({ reportCount: { $gt: 0 } }).sort({ reportCount: -1 });
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching reported items:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
@@ -204,4 +255,6 @@ module.exports = {
   downloadItemFile,
   deleteAuctionItem,
   updateAuctionItem,
+  reportAuctionItem,
+  getReportedItems,
 };

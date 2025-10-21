@@ -1,8 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware');
+
+// @route   GET /api/auctions
+// @desc    Get all auction items
+// @access  Public
+router.get('/', getAuctionItems);
+
+// @route   GET /api/auctions/reported
+// @desc    Get all reported auction items (Admin only)
+// @access  Admin
+router.get('/reported', authMiddleware, adminMiddleware, getReportedItems);
+
+// @route   GET /api/auctions/:id
+// @desc    Get single auction item
+// @access  Public
+router.get('/:id', getAuctionItemById);
+
+// @route   GET /api/auctions/:id/download
+// @desc    Download an item file after winning
+// @access  Private
+router.get('/:id/download', authMiddleware, downloadItemFile);
 
 // @route   POST /api/auctions
 // @desc    Create a new auction item
@@ -20,20 +41,10 @@ router.post('/', authMiddleware, (req, res) => {
   });
 });
 
-// @route   GET /api/auctions
-// @desc    Get all auction items
-// @access  Public
-router.get('/', getAuctionItems);
-
-// @route   GET /api/auctions/:id
-// @desc    Get single auction item
-// @access  Public
-router.get('/:id', getAuctionItemById);
-
-// @route   GET /api/auctions/:id/download
-// @desc    Download an item file after winning
+// @route   POST /api/auctions/:id/report
+// @desc    Report an auction item
 // @access  Private
-router.get('/:id/download', authMiddleware, downloadItemFile);
+router.post('/:id/report', authMiddleware, reportAuctionItem);
 
 // @route   PUT /api/auctions/:id
 // @desc    Update an auction item

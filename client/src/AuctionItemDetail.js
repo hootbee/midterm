@@ -240,7 +240,7 @@ function AuctionItemDetail() {
 
       <button onClick={() => setShowReportForm(true)} style={{ marginTop: '10px' }}>신고하기</button>
 
-      {showReportForm && <ReportForm onCancel={() => setShowReportForm(false)} />}
+      {showReportForm && <ReportForm itemId={item._id} onCancel={() => setShowReportForm(false)} />}
 
       {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
       {isAuctionOver && !isWinner && <p>경매가 종료되었습니다.</p>}
@@ -259,18 +259,43 @@ function AuctionItemDetail() {
   );
 }
 
-const ReportForm = ({ onCancel }) => {
+const ReportForm = ({ itemId, onCancel }) => {
   const [reason, setReason] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reason) {
       alert('신고 사유를 선택해주세요.');
       return;
     }
-    // Backend logic to be implemented later
-    alert(`신고가 접수되었습니다. 사유: ${reason}`);
-    onCancel(); // Close the form
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auctions/${itemId}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message);
+        onCancel(); // Close the form
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      alert(`신고 접수 오류: ${err.message}`);
+    }
   };
 
   return (
@@ -282,7 +307,7 @@ const ReportForm = ({ onCancel }) => {
             <input 
               type="checkbox" 
               checked={reason === '허위 게시물'}
-              onChange={() => setReason('허위 게시물')}
+              onChange={() => setReason(prev => prev === '허위 게시물' ? '' : '허위 게시물')}
             />
             허위 게시물
           </label>
