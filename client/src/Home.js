@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const itemCardStyle = {
   border: '1px solid #ccc',
@@ -29,11 +29,19 @@ function ItemList() {
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const fetchItems = async () => {
+      const searchTerm = searchParams.get('search');
+      const searchType = searchParams.get('type');
+      
       try {
-        const res = await fetch(`/api/auctions?page=${currentPage}&limit=5`);
+        let url = `/api/auctions?page=${currentPage}&limit=5`;
+        if (searchTerm && searchType) {
+          url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
+        }
+        const res = await fetch(url);
         const data = await res.json();
         if (res.ok) {
           setItems(data.items);
@@ -47,7 +55,7 @@ function ItemList() {
     };
 
     fetchItems();
-  }, [currentPage]); // Refetch only when page changes
+  }, [currentPage, searchParams]); // Refetch when page or search params change
 
   return (
     <div>

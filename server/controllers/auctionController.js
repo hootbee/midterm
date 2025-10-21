@@ -55,7 +55,9 @@ const getAuctionItems = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
-    const { items, totalItems } = await findAllAuctionItems({ page, limit });
+    const { search, type } = req.query;
+
+    const { items, totalItems } = await findAllAuctionItems({ page, limit, search, type });
 
     res.json({
       items,

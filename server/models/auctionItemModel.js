@@ -65,10 +65,22 @@ const auctionItemSchema = new mongoose.Schema({
 const AuctionItem = mongoose.model('AuctionItem', auctionItemSchema);
 
 // Function to find all auction items
-const findAllAuctionItems = async ({ page, limit }) => {
+const findAllAuctionItems = async ({ page, limit, search, type }) => {
   const skip = (page - 1) * limit;
-  const totalItems = await AuctionItem.countDocuments();
-  const items = await AuctionItem.find()
+
+  let query = {};
+  if (search && type) {
+    if (type === 'title') {
+      query.title = { $regex: search, $options: 'i' };
+    } else if (type === 'content') {
+      query.content = { $regex: search, $options: 'i' };
+    } else if (type === 'sellerUuid') {
+      query.sellerUuid = search;
+    }
+  }
+
+  const totalItems = await AuctionItem.countDocuments(query);
+  const items = await AuctionItem.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);

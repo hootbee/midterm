@@ -35,7 +35,7 @@ function App() {
             <select value={searchType} onChange={(e) => setSearchType(e.target.value)}>
               <option value="sellerUuid">UUID</option>
               <option value="title">제목</option>
-              <option value="description">내용</option>
+              <option value="content">내용</option>
             </select>
             <input
               type="text"
