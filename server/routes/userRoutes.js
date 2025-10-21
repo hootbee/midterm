@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid } = require('../controllers/userController');
+const { signup, login, searchUserByUuid ,getMe} = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -11,5 +11,10 @@ router.post('/login', login);
 // @desc    Search for a user by UUID (Admin only)
 // @access  Admin
 router.get('/search/:uuid', authMiddleware, adminMiddleware, searchUserByUuid);
+
+// @route   GET /api/users/me
+// @desc    Get current user profile
+// @access  Private
+router.get('/me', authMiddleware, getMe);
 
 module.exports = router;

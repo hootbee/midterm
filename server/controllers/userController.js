@@ -120,8 +120,28 @@ const searchUserByUuid = async (req, res) => {
   }
 };
 
+// @desc    Get current user's profile
+// @route   GET /api/users/me
+// @access  Private
+const getMe = async (req, res) => {
+  try {
+    // The user's UUID is available from the auth middleware
+    const user = await findUserByUuid(req.user.uuid);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
   searchUserByUuid,
+  getMe,
 };

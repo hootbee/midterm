@@ -29,6 +29,7 @@ function AuctionItemDetail() {
   const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
   const { id } = useParams();
   const socketRef = useRef(null);
   const navigate = useNavigate();
@@ -234,9 +235,13 @@ function AuctionItemDetail() {
           <p>자신이 등록한 물품입니다.</p>
           <button onClick={() => setIsEditMode(true)}>수정하기</button>
           <button onClick={handleDelete} style={{ backgroundColor: 'red', color: 'white', marginLeft: '10px' }}>삭제하기</button>
-          <button onClick={() => alert('신고 기능은 아직 구현되지 않았습니다.')} style={{ marginLeft: '10px' }}>신고하기</button>
         </div>
       )}
+
+      <button onClick={() => setShowReportForm(true)} style={{ marginTop: '10px' }}>신고하기</button>
+
+      {showReportForm && <ReportForm onCancel={() => setShowReportForm(false)} />}
+
       {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
       {isAuctionOver && !isWinner && <p>경매가 종료되었습니다.</p>}
 
@@ -253,6 +258,43 @@ function AuctionItemDetail() {
     </div>
   );
 }
+
+const ReportForm = ({ onCancel }) => {
+  const [reason, setReason] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!reason) {
+      alert('신고 사유를 선택해주세요.');
+      return;
+    }
+    // Backend logic to be implemented later
+    alert(`신고가 접수되었습니다. 사유: ${reason}`);
+    onCancel(); // Close the form
+  };
+
+  return (
+    <div style={{ border: '1px solid #ccc', padding: '15px', marginTop: '20px' }}>
+      <h4>게시물 신고</h4>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>
+            <input 
+              type="checkbox" 
+              checked={reason === '허위 게시물'}
+              onChange={() => setReason('허위 게시물')}
+            />
+            허위 게시물
+          </label>
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <button type="submit">신고 접수</button>
+          <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>취소</button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const EditForm = ({ item, onUpdate, onCancel }) => {
   const [formData, setFormData] = useState({

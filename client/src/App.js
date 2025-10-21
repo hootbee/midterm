@@ -7,6 +7,8 @@ import SignUp from './SignUp';
 import AuctionItemDetail from './AuctionItemDetail';
 import AdminPage from './AdminPage';
 import PrivateRoute from './PrivateRoute';
+import LoggedInRoute from './LoggedInRoute';
+import Profile from './Profile';
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/auction/:id" element={<AuctionItemDetail />} />
           <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
+          <Route path="/profile" element={<LoggedInRoute><Profile /></LoggedInRoute>} />
         </Routes>
       </header>
     </div>
