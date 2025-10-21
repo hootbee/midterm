@@ -58,6 +58,40 @@ const UserSearch = () => {
     }
   };
 
+  const handleDelete = async (uuidToDelete) => {
+    if (!window.confirm('정말로 이 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Authentication error. Please log in again.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/users/${uuidToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUserData(null);
+        alert('사용자가 성공적으로 삭제되었습니다.');
+        setUuid(''); // Clear search input
+      } else {
+        setError(data.message || 'Failed to delete user.');
+      }
+    } catch (err) {
+      setError('An error occurred while deleting the user.');
+      console.error('Delete error:', err);
+    }
+  };
+
   return (
     <div style={{ marginTop: '20px' }}>
       <h3>사용자 검색 (UUID)</h3>
@@ -81,6 +115,9 @@ const UserSearch = () => {
           <p><strong>학번:</strong> {userData.student_id}</p>
           <p><strong>평판 점수:</strong> {userData.reputation_score}</p>
           <p><strong>가입일:</strong> {new Date(userData.created_at).toLocaleString()}</p>
+          <button onClick={() => handleDelete(userData.uuid)} style={{ marginTop: '10px', backgroundColor: 'red', color: 'white' }}>
+            계정 삭제
+          </button>
         </div>
       )}
     </div>

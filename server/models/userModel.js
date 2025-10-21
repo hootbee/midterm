@@ -132,6 +132,18 @@ const findUserByUuid = async (uuid) => {
   }
 };
 
+const deleteUserByUuid = async (uuid) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'DELETE FROM users WHERE uuid = ?';
+    const result = await conn.query(query, [uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -139,4 +151,5 @@ module.exports = {
   findUserByEmail,
   logBid,
   findUserByUuid,
+  deleteUserByUuid,
 };
