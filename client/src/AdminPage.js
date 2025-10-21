@@ -133,7 +133,6 @@ const ReportedItems = () => {
     const fetchReportedItems = async () => {
       const token = localStorage.getItem('token');
       try {
-        // This endpoint needs to be created on the backend
         const res = await fetch('/api/auctions/reported', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
@@ -153,7 +152,6 @@ const ReportedItems = () => {
       const fetchReports = async () => {
         const token = localStorage.getItem('token');
         try {
-          // This endpoint also needs to be created
           const res = await fetch(`/api/reports/${selectedItem._id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
@@ -169,14 +167,56 @@ const ReportedItems = () => {
     }
   }, [selectedItem]);
 
+  const handleResetReportCount = async (itemId) => {
+    if (!window.confirm('정말로 이 게시물의 신고 횟수를 초기화하시겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auctions/${itemId}/reset-report-count`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reportCount: 0 }),
+      });
+
+      if (res.ok) {
+        // Update the local state to reflect the change
+        setItems(prevItems => 
+          prevItems.map(item => 
+            item._id === itemId ? { ...item, reportCount: 0 } : item
+          )
+        );
+        alert('신고 횟수가 성공적으로 초기화되었습니다.');
+      } else {
+        const data = await res.json();
+        alert(`신고 횟수 초기화 실패: ${data.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error('Error resetting report count:', err);
+      alert('신고 횟수 초기화 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div style={{ marginTop: '20px' }}>
       <h3>신고된 게시물 목록</h3>
       <div style={{ display: 'flex' }}>
         <div style={{ width: '50%', borderRight: '1px solid #ccc', paddingRight: '10px' }}>
           {items.map(item => (
-            <div key={item._id} onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer', padding: '5px', borderBottom: '1px solid #eee' }}>
-              <p><strong>{item.title}</strong> (신고: {item.reportCount}회)</p>
+            <div key={item._id} style={{ cursor: 'pointer', padding: '5px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p onClick={() => setSelectedItem(item)}><strong>{item.title}</strong> (신고: {item.reportCount}회)</p>
+              <button onClick={() => handleResetReportCount(item._id)} style={{ marginLeft: '10px', backgroundColor: 'blue', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                초기화
+              </button>
             </div>
           ))}
         </div>

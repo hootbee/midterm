@@ -1,4 +1,4 @@
-const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById } = require('../models/auctionItemModel');
+const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById, resetReportCountById } = require('../models/auctionItemModel');
 const { findUserByEmail } = require('../models/userModel');
 const fs = require('fs');
 const path = require('path');
@@ -252,6 +252,26 @@ const getReportedItems = async (req, res) => {
   }
 };
 
+// @desc    Reset report count for an auction item
+// @route   PUT /api/auctions/:id/reset-report-count
+// @access  Admin
+const resetReportCount = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedItem = await resetReportCountById(id);
+
+    if (!updatedItem) {
+      return res.status(404).json({ message: 'Auction item not found.' });
+    }
+
+    res.json(updatedItem);
+  } catch (error) {
+    console.error('Error resetting report count:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
@@ -261,4 +281,5 @@ module.exports = {
   updateAuctionItem,
   reportAuctionItem,
   getReportedItems,
+  resetReportCount,
 };
