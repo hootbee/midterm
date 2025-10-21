@@ -10,6 +10,7 @@ const itemCardStyle = {
   boxSizing: 'border-box',
   display: 'flex',
   gap: '16px',
+  alignItems: 'center', // Align items vertically in the middle
 };
 
 const thumbnailStyle = {
@@ -25,11 +26,13 @@ const containerStyle = {
   justifyContent: 'center',
 };
 
-function ItemList() {
+function ItemList({ isLoggedIn, isAdmin, userUuid }) {
   const [items, setItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams] = useSearchParams();
+  const [isSelectionMode, setIsSelectionMode] = useState(false); // New state for selection mode
+  const [selectedItems, setSelectedItems] = useState([]); // New state for selected items
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -46,8 +49,6 @@ function ItemList() {
         if (res.ok) {
           setItems(data.items);
           setTotalPages(data.totalPages);
-        } else {
-          console.error('Failed to fetch items:', data.message);
         }
       } catch (error) {
         console.error('Error fetching items:', error);
@@ -55,7 +56,125 @@ function ItemList() {
     };
 
     fetchItems();
-  }, [currentPage, searchParams]); // Refetch when page or search params change
+  }, [currentPage, searchParams]);
+
+  const handleDeleteItem = async (itemId) => {
+    if (!window.confirm('정말로 이 경매 아이템을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auctions/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        setItems(prevItems => prevItems.filter(item => item._id !== itemId));
+        alert('경매 아이템이 성공적으로 삭제되었습니다.');
+        setSelectedItems(prev => prev.filter(id => id !== itemId)); // Remove from selected if deleted
+      } else {
+        const data = await res.json();
+        alert(`아이템 삭제 실패: ${data.message || res.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('아이템 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(prev => !prev);
+    setSelectedItems([]); // Clear selection when toggling mode
+  };
+
+  const handleSelectItem = (itemId) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.length === items.length) {
+      setSelectedItems([]); // Deselect all
+    } else {
+      setSelectedItems(items.map(item => item._id)); // Select all
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedItems.length === 0) {
+      alert('삭제할 아이템을 선택해주세요.');
+      return;
+    }
+
+    if (!window.confirm(`${selectedItems.length}개의 아이템을 정말로 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    let successfulDeletions = 0;
+
+    try {
+      for (const itemId of selectedItems) {
+        const res = await fetch(`/api/auctions/${itemId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          successfulDeletions++;
+        } else {
+          const data = await res.json();
+          console.error(`Failed to delete item ${itemId}: ${data.message || res.statusText}`);
+        }
+      }
+
+      if (successfulDeletions > 0) {
+        alert(`${successfulDeletions}개의 아이템이 성공적으로 삭제되었습니다.`);
+
+        // Re-fetch items to update the list
+        const searchTerm = searchParams.get('search');
+        const searchType = searchParams.get('type');
+        let url = `/api/auctions?page=${currentPage}&limit=5`;
+
+        if (searchTerm && searchType) {
+          url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (res.ok) {
+          setItems(data.items);
+          setTotalPages(data.totalPages);
+        }
+      } else {
+        alert('선택된 아이템 중 삭제된 것이 없습니다.');
+      }
+    } catch (error) {
+      console.error('Error deleting items:', error);
+      alert('일괄 삭제 중 오류가 발생했습니다.');
+    }
+
+    setSelectedItems([]);
+    setIsSelectionMode(false); // Exit selection mode after batch delete
+  };
 
   return (
     <div>
@@ -63,10 +182,35 @@ function ItemList() {
       <Link to="/create-auction">
         <button style={{ marginBottom: '20px' }}>작성하기</button>
       </Link>
+      {isAdmin && (
+        <button onClick={toggleSelectionMode} style={{ marginBottom: '20px', marginLeft: '10px' }}>
+          {isSelectionMode ? '선택 모드 종료' : '삭제하기'}
+        </button>
+      )}
+
+      {isSelectionMode && (
+        <div style={{ marginBottom: '20px', marginLeft: '10px' }}>
+          <button onClick={handleSelectAll} style={{ marginRight: '10px' }}>
+            {selectedItems.length === items.length ? '전체 선택 해제' : '전체 선택하기'}
+          </button>
+          <button onClick={handleBatchDelete} disabled={selectedItems.length === 0} style={{ backgroundColor: 'red', color: 'white' }}>
+            선택된 아이템 삭제 ({selectedItems.length})
+          </button>
+        </div>
+      )}
+
       <div style={containerStyle}>
         {items.map(item => (
-          <Link to={`/auction/${item._id}`} key={item._id} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div style={itemCardStyle}>
+          <div key={item._id} style={itemCardStyle}>
+            {isSelectionMode && (
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(item._id)}
+                onChange={() => handleSelectItem(item._id)}
+                style={{ marginRight: '10px', transform: 'scale(1.5)' }}
+              />
+            )}
+            <Link to={`/auction/${item._id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1, display: 'flex', gap: '16px' }}>
               <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle} />
               <div>
                 <h3>{item.title}</h3>
@@ -75,8 +219,13 @@ function ItemList() {
                 <p>경매 시작가: {item.startPrice.toLocaleString()}원</p>
                 <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
               </div>
-            </div>
-          </Link>
+            </Link>
+            {!isSelectionMode && (isLoggedIn && (isAdmin || userUuid === item.sellerUuid)) && (
+              <button onClick={() => handleDeleteItem(item._id)} style={{ backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                삭제하기
+              </button>
+            )}
+          </div>
         ))}
       </div>
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -97,6 +246,7 @@ function ItemList() {
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userUuid, setUserUuid] = useState(null);
 
   const decodeToken = (token) => {
     try {
@@ -117,8 +267,11 @@ function Home() {
     if (token) {
       setIsLoggedIn(true);
       const decoded = decodeToken(token);
-      if (decoded && decoded.admin) {
-        setIsAdmin(true);
+      if (decoded) {
+        setUserUuid(decoded.uuid);
+        if (decoded.admin) {
+          setIsAdmin(true);
+        }
       }
     }
   }, []);
@@ -127,6 +280,7 @@ function Home() {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setUserUuid(null);
     alert('로그아웃 되었습니다.');
   };
 
@@ -147,7 +301,7 @@ function Home() {
           <Link to="/signup"><button style={{ marginLeft: '10px' }}>회원가입</button></Link>
         </>
       )}
-      <ItemList />
+      <ItemList isLoggedIn={isLoggedIn} isAdmin={isAdmin} userUuid={userUuid} />
     </div>
   );
 }

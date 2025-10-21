@@ -142,8 +142,8 @@ const deleteAuctionItem = async (req, res) => {
       return res.status(404).json({ message: 'Auction item not found' });
     }
 
-    // Check if the user is the owner of the auction item
-    if (item.sellerUuid !== req.user.uuid) {
+    // Check if the user is the owner of the auction item OR if the user is an admin
+    if (item.sellerUuid !== req.user.uuid && !req.user.admin) {
       return res.status(403).json({ message: 'User not authorized to delete this item' });
     }
 
