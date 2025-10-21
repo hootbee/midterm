@@ -35,6 +35,7 @@ function AuctionView() {
   // This is now a stateful component
   const CreateForm = () => {
     const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
     const [startPrice, setStartPrice] = useState('');
     const [endTime, setEndTime] = useState('');
     const [photo, setPhoto] = useState(null);
@@ -50,7 +51,7 @@ function AuctionView() {
       }
 
       // Updated validation
-      if (!photo || !itemFile || !title || !startPrice || !endTime) {
+      if (!photo || !itemFile || !title || !content || !startPrice || !endTime) {
         alert('모든 필드를 채워주세요.');
         return;
       }
@@ -59,6 +60,7 @@ function AuctionView() {
       formData.append('photo', photo); // The thumbnail
       formData.append('itemFile', itemFile); // The actual file
       formData.append('title', title);
+      formData.append('content', content);
       formData.append('startPrice', startPrice);
       formData.append('endTime', endTime);
 
@@ -114,6 +116,10 @@ function AuctionView() {
           <div style={formInputStyle}>
             <label htmlFor="title">제목: </label>
             <input type="text" id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div style={formInputStyle}>
+            <label htmlFor="content">내용: </label>
+            <textarea id="content" name="content" value={content} onChange={(e) => setContent(e.target.value)} required style={{ width: '100%', minHeight: '200px' }} />
           </div>
           <div style={formInputStyle}>
             <label htmlFor="startPrice">경매 시작가: </label>

@@ -5,6 +5,10 @@ const auctionItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  content: {
+    type: String,
+    required: true,
+  },
   imagePath: { // Storing the path to the uploaded file
     type: String,
     required: true,

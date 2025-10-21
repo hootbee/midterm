@@ -201,6 +201,11 @@ function AuctionItemDetail() {
     <div style={detailContainerStyle}>
       <h2>{item.title}</h2>
       <img src={`/${item.imagePath}`} alt={item.title} style={imageStyle} />
+
+      <div style={{ margin: '20px 0', whiteSpace: 'pre-wrap', border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
+        {item.content}
+      </div>
+
       <p><strong>판매자 UUID:</strong> {item.sellerUuid}</p>
       <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
       <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
@@ -324,6 +329,7 @@ const ReportForm = ({ itemId, onCancel }) => {
 const EditForm = ({ item, onUpdate, onCancel }) => {
   const [formData, setFormData] = useState({
     title: item.title,
+    content: item.content,
     startPrice: item.startPrice,
     endTime: new Date(item.endTime).toISOString().slice(0, 16),
   });
@@ -339,6 +345,10 @@ const EditForm = ({ item, onUpdate, onCancel }) => {
         <div>
           <label>제목: </label>
           <input type="text" name="title" value={formData.title} onChange={onChange} required />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>내용: </label>
+          <textarea name="content" value={formData.content} onChange={onChange} required style={{ width: '100%', minHeight: '200px' }} />
         </div>
         <div style={{ marginTop: '10px' }}>
           <label>경매 시작가: </label>

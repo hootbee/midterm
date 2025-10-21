@@ -8,7 +8,7 @@ const path = require('path');
 // @access  Private
 const createAuctionItem = async (req, res) => {
   try {
-    const { title, startPrice, endTime } = req.body;
+    const { title, content, startPrice, endTime } = req.body;
     const { email, uuid } = req.user; // Get user info from the token payload (set by authMiddleware)
 
     // Check if files were uploaded
@@ -17,7 +17,7 @@ const createAuctionItem = async (req, res) => {
     }
 
     // Basic validation
-    if (!title || !startPrice || !endTime) {
+    if (!title || !content || !startPrice || !endTime) {
       return res.status(400).json({ message: 'Please fill in all fields.' });
     }
 
@@ -30,6 +30,7 @@ const createAuctionItem = async (req, res) => {
 
     const newItem = new AuctionItem({
       title,
+      content,
       startPrice,
       endTime,
       imagePath: `uploads/${req.files.photo[0].filename}`,
@@ -182,9 +183,10 @@ const updateAuctionItem = async (req, res) => {
     }
 
     // For now, only update text fields. File updates can be added later.
-    const { title, startPrice, endTime } = req.body;
+    const { title, content, startPrice, endTime } = req.body;
     const updateData = {};
     if (title) updateData.title = title;
+    if (content) updateData.content = content;
     if (startPrice) updateData.startPrice = startPrice;
     if (endTime) updateData.endTime = endTime;
 
