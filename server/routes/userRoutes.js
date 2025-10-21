@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid ,getMe, deleteUser} = require('../controllers/userController');
+const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile} = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -21,5 +21,10 @@ router.get('/me', authMiddleware, getMe);
 // @desc    Delete a user by UUID (Admin only)
 // @access  Admin
 router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
+
+// @route   PUT /api/users/profile
+// @desc    Update user profile
+// @access  Private
+router.put('/profile', authMiddleware, updateUserProfile);
 
 module.exports = router;

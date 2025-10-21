@@ -144,6 +144,19 @@ const deleteUserByUuid = async (uuid) => {
   }
 };
 
+const updateUserByUuid = async (uuid, updateData) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const { name, email, student_id } = updateData;
+    const query = 'UPDATE users SET name = ?, email = ?, student_id = ? WHERE uuid = ?';
+    const result = await conn.query(query, [name, email, student_id, uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -152,4 +165,5 @@ module.exports = {
   logBid,
   findUserByUuid,
   deleteUserByUuid,
+  updateUserByUuid,
 };

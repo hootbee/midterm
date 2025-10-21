@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -155,10 +155,54 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  try {
+    const { name, email, studentId } = req.body;
+    const userUuid = req.user.uuid; // Get UUID from authenticated user
+
+    // Basic validation
+    if (!name || !email || !studentId) {
+      return res.status(400).json({ message: 'Please fill in all fields.' });
+    }
+
+    // Check for duplicate email or student ID (excluding current user)
+    const existingUserByEmail = await findUserByEmail(email);
+    if (existingUserByEmail && existingUserByEmail.uuid !== userUuid) {
+      return res.status(400).json({ message: 'An account with this email already exists.' });
+    }
+
+    const existingUserByStudentId = await findUserByEmailOrStudentId(null, studentId);
+    if (existingUserByStudentId && existingUserByStudentId.uuid !== userUuid) {
+      return res.status(400).json({ message: 'An account with this student ID already exists.' });
+    }
+
+    const updateData = {
+      name,
+      email,
+      student_id: studentId,
+    };
+
+    await updateUserByUuid(userUuid, updateData);
+
+    // Fetch the updated user to return the latest data
+    const updatedUser = await findUserByUuid(userUuid);
+
+    res.json(updatedUser);
+
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
   searchUserByUuid,
   getMe,
   deleteUser,
+  updateUserProfile,
 };
