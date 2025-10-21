@@ -201,7 +201,7 @@ const updateAuctionItem = async (req, res) => {
   }
 };
 
-const Report = require('../models/reportModel');
+const { Report } = require('../models/reportModel');
 
 // ... (other controller functions)
 

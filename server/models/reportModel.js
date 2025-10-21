@@ -22,4 +22,11 @@ const reportSchema = new mongoose.Schema({
 
 const Report = mongoose.model('Report', reportSchema);
 
-module.exports = Report;
+const deleteAllReportsByAuctionItemId = async (auctionItemId) => {
+  return await Report.deleteMany({ auctionItemId });
+};
+
+module.exports = {
+  Report,
+  deleteAllReportsByAuctionItemId,
+};

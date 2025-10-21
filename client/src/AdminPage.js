@@ -206,6 +206,38 @@ const ReportedItems = () => {
     }
   };
 
+  const handleDeleteAllReports = async (itemId) => {
+    if (!window.confirm('정말로 이 게시물의 모든 신고 내역을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/reports/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        setReports([]); // Clear the reports list
+        alert('모든 신고 내역이 성공적으로 삭제되었습니다.');
+      } else {
+        const data = await res.json();
+        alert(`신고 내역 삭제 실패: ${data.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error('Error deleting reports:', err);
+      alert('신고 내역 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div style={{ marginTop: '20px' }}>
       <h3>신고된 게시물 목록</h3>
@@ -224,6 +256,9 @@ const ReportedItems = () => {
           {selectedItem ? (
             <div>
               <h4>'{selectedItem.title}' 신고 내역</h4>
+              <button onClick={() => handleDeleteAllReports(selectedItem._id)} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                신고내역 전체 삭제하기
+              </button>
               {reports.length > 0 ? (
                 <ul>
                   {reports.map(report => (
