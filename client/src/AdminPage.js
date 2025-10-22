@@ -256,6 +256,59 @@ const ReportedItems = () => {
     }
   };
 
+  const handleDecreaseReputation = async (sellerUuid) => {
+    if (!sellerUuid) {
+      alert('판매자 정보를 찾을 수 없습니다.');
+      return;
+    }
+    if (!window.confirm('정말로 이 판매자의 평판 점수를 50점 하락시키겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      // 1. Get current user data to find current reputation score
+      const userRes = await fetch(`/api/users/search/${sellerUuid}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!userRes.ok) {
+        const errorData = await userRes.json();
+        const message = errorData.message || '판매자 정보를 가져오는 데 실패했습니다.';
+        throw new Error(message);
+      }
+
+      const userData = await userRes.json();
+      const currentScore = userData.reputation_score;
+      const newScore = currentScore - 50;
+
+      // 2. Update the reputation score
+      const updateRes = await fetch(`/api/users/${sellerUuid}/reputation`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reputationScore: newScore }),
+      });
+
+      if (!updateRes.ok) {
+        throw new Error('평판 점수 업데이트에 실패했습니다.');
+      }
+
+      alert(`판매자의 평판 점수가 50점 하락했습니다. 현재 점수: ${newScore}`);
+
+    } catch (err) {
+      console.error('Error decreasing reputation:', err);
+      alert(`오류 발생: ${err.message}`);
+    }
+  };
+
   const handleDeleteAllReports = async (itemId) => {
     if (!window.confirm('정말로 이 게시물의 모든 신고 내역을 삭제하시겠습니까?')) {
       return;
@@ -305,6 +358,9 @@ const ReportedItems = () => {
               <h4>'{selectedItem.title}' 신고 내역</h4>
               <button onClick={() => handleDeleteAllReports(selectedItem._id)} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
                 신고내역 전체 삭제하기
+              </button>
+              <button onClick={() => handleDecreaseReputation(selectedItem.sellerUuid)} style={{ marginLeft: '10px', backgroundColor: 'orange', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                평판 하락
               </button>
               <button onClick={() => handleResetReports(selectedItem._id)} style={{ marginLeft: '10px', backgroundColor: 'green', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
                 신고 초기화
