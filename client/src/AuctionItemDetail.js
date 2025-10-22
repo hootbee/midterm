@@ -28,6 +28,7 @@ function AuctionItemDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
+  const [newEndTime, setNewEndTime] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const { id } = useParams();
@@ -43,6 +44,9 @@ function AuctionItemDetail() {
         const data = await res.json();
         setItem(data);
         setBidAmount(data.currentPrice + 1);
+        if (data.endTime) {
+          setNewEndTime(new Date(data.endTime).toISOString().slice(0, 16));
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -173,6 +177,31 @@ function AuctionItemDetail() {
     }
   };
 
+  const handleEndTimeUpdate = async () => {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/auctions/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ endTime: newEndTime }),
+        });
+
+        if (res.ok) {
+            const updatedItem = await res.json();
+            setItem(updatedItem);
+            alert('마감 시간이 수정되었습니다.');
+        } else {
+            const data = await res.json();
+            throw new Error(data.message || '수정에 실패했습니다.');
+        }
+    } catch (err) {
+        alert(`수정 오류: ${err.message}`);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!item) return <div>Item not found.</div>;
@@ -210,6 +239,17 @@ function AuctionItemDetail() {
       <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
       <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
       <p><strong>마감 시간:</strong> {new Date(item.endTime).toLocaleString()}</p>
+      {isSeller && !isAuctionOver && (
+        <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
+            <label>마감 시간 수정: </label>
+            <input
+                type="datetime-local"
+                value={newEndTime}
+                onChange={(e) => setNewEndTime(e.target.value)}
+            />
+            <button onClick={handleEndTimeUpdate} style={{ marginLeft: '10px' }}>수정</button>
+        </div>
+      )}
       <p><strong>등록일:</strong> {new Date(item.createdAt).toLocaleString()}</p>
 
       {isWinner && (
