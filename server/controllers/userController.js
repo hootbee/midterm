@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -198,6 +198,28 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const updateUserReputation = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { reputationScore } = req.body;
+
+    if (reputationScore === undefined || isNaN(parseInt(reputationScore))) {
+      return res.status(400).json({ message: 'Valid reputation score is required.' });
+    }
+
+    const result = await updateReputationByUuid(uuid, parseInt(reputationScore));
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json({ message: 'Reputation score updated successfully.' });
+  } catch (error) {
+    console.error('Error updating reputation score:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -205,4 +227,5 @@ module.exports = {
   getMe,
   deleteUser,
   updateUserProfile,
+  updateUserReputation,
 };

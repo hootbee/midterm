@@ -20,7 +20,14 @@ function AdminPage() {
 const UserSearch = () => {
   const [uuid, setUuid] = useState('');
   const [userData, setUserData] = useState(null);
+  const [newReputationScore, setNewReputationScore] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (userData) {
+      setNewReputationScore(userData.reputation_score);
+    }
+  }, [userData]);
 
   const handleSearch = async () => {
     if (!uuid) {
@@ -92,6 +99,40 @@ const UserSearch = () => {
     }
   };
 
+  const handleReputationUpdate = async () => {
+    if (!userData) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Authentication error. Please log in again.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/users/${userData.uuid}/reputation`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reputationScore: newReputationScore }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('평판 점수가 성공적으로 수정되었습니다.');
+        // Refresh user data to show the updated score
+        setUserData({ ...userData, reputation_score: newReputationScore });
+      } else {
+        setError(data.message || 'Failed to update reputation score.');
+      }
+    } catch (err) {
+      setError('An error occurred while updating the score.');
+      console.error('Reputation update error:', err);
+    }
+  };
+
   return (
     <div style={{ marginTop: '20px' }}>
       <h3>사용자 검색 (UUID)</h3>
@@ -113,7 +154,17 @@ const UserSearch = () => {
           <p><strong>UUID:</strong> {userData.uuid}</p>
           <p><strong>이름:</strong> {userData.name}</p>
           <p><strong>학번:</strong> {userData.student_id}</p>
-          <p><strong>평판 점수:</strong> {userData.reputation_score}</p>
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px' }}>
+            <strong>평판 점수:</strong>
+            <input
+              type="number"
+              value={newReputationScore}
+              onChange={(e) => setNewReputationScore(e.target.value)}
+              step="10"
+              style={{ margin: '0 10px', width: '100px' }}
+            />
+            <button onClick={handleReputationUpdate}>수정</button>
+          </div>
           <p><strong>가입일:</strong> {new Date(userData.created_at).toLocaleString()}</p>
           <button onClick={() => handleDelete(userData.uuid)} style={{ marginTop: '10px', backgroundColor: 'red', color: 'white' }}>
             계정 삭제

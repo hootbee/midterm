@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile} = require('../controllers/userController');
+const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile, updateUserReputation} = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -26,5 +26,10 @@ router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
 // @desc    Update user profile
 // @access  Private
 router.put('/profile', authMiddleware, updateUserProfile);
+
+// @route   PUT /api/users/:uuid/reputation
+// @desc    Update a user's reputation score (Admin only)
+// @access  Admin
+router.put('/:uuid/reputation', authMiddleware, adminMiddleware, updateUserReputation);
 
 module.exports = router;

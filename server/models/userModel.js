@@ -157,6 +157,18 @@ const updateUserByUuid = async (uuid, updateData) => {
   }
 };
 
+const updateReputationByUuid = async (uuid, newScore) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'UPDATE users SET reputation_score = ? WHERE uuid = ?';
+    const result = await conn.query(query, [newScore, uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -166,4 +178,5 @@ module.exports = {
   findUserByUuid,
   deleteUserByUuid,
   updateUserByUuid,
+  updateReputationByUuid,
 };
