@@ -102,9 +102,6 @@ const updateById = async (id, updateData) => {
   return await AuctionItem.findByIdAndUpdate(id, updateData, { new: true }); // { new: true } returns the updated document
 };
 
-const resetReportCountById = async (id) => {
-  return await AuctionItem.findByIdAndUpdate(id, { reportCount: 0 }, { new: true });
-};
 
 module.exports = {
   AuctionItem,
@@ -112,5 +109,4 @@ module.exports = {
   findById,
   deleteById,
   updateById,
-  resetReportCountById,
 };

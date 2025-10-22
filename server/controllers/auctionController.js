@@ -1,6 +1,7 @@
 const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById, resetReportCountById } = require('../models/auctionItemModel');
+const { Report } = require('../models/reportModel');
 const { findUserByEmail } = require('../models/userModel');
-const fs = require('fs');
+fs = require('fs');
 const path = require('path');
 
 // @desc    Create a new auction item
@@ -201,7 +202,6 @@ const updateAuctionItem = async (req, res) => {
   }
 };
 
-const { Report } = require('../models/reportModel');
 
 // ... (other controller functions)
 
@@ -252,23 +252,29 @@ const getReportedItems = async (req, res) => {
   }
 };
 
-// @desc    Reset report count for an auction item
-// @route   PUT /api/auctions/:id/reset-report-count
-// @access  Admin
-const resetReportCount = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const updatedItem = await resetReportCountById(id);
+const resetReportsForItem = async (req, res) => {
+  try {
+    const auctionItemId = req.params.id;
+
+    // 1. Delete all reports for the auction item
+    await Report.deleteMany({ auctionItemId: auctionItemId });
+
+    // 2. Reset the reportCount on the auction item
+    const updatedItem = await AuctionItem.findByIdAndUpdate(
+      auctionItemId,
+      { reportCount: 0 },
+      { new: true }
+    );
 
     if (!updatedItem) {
-      return res.status(404).json({ message: 'Auction item not found.' });
+      return res.status(404).json({ message: 'Auction item not found' });
     }
 
-    res.json(updatedItem);
+    res.json({ message: '신고 내역이 성공적으로 초기화되었습니다.', item: updatedItem });
   } catch (error) {
-    console.error('Error resetting report count:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error resetting reports:', error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -281,5 +287,5 @@ module.exports = {
   updateAuctionItem,
   reportAuctionItem,
   getReportedItems,
-  resetReportCount,
+  resetReportsForItem,
 };

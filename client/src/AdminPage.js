@@ -167,8 +167,8 @@ const ReportedItems = () => {
     }
   }, [selectedItem]);
 
-  const handleResetReportCount = async (itemId) => {
-    if (!window.confirm('정말로 이 게시물의 신고 횟수를 초기화하시겠습니까?')) {
+  const handleResetReports = async (itemId) => {
+    if (!window.confirm('정말로 이 게시물의 신고 내역을 모두 삭제하고 신고 횟수를 0으로 초기화하시겠습니까?')) {
       return;
     }
 
@@ -179,30 +179,29 @@ const ReportedItems = () => {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}/reset-report-count`, {
+      const res = await fetch(`/api/auctions/${itemId}/reset-reports`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ reportCount: 0 }),
       });
 
       if (res.ok) {
-        // Update the local state to reflect the change
-        setItems(prevItems => 
-          prevItems.map(item => 
+        // Update the local state
+        setItems(prevItems =>
+          prevItems.map(item =>
             item._id === itemId ? { ...item, reportCount: 0 } : item
           )
         );
-        alert('신고 횟수가 성공적으로 초기화되었습니다.');
+        setReports([]); // Clear reports for the selected item if it's this one
+        alert('신고 내역이 성공적으로 초기화되었습니다.');
       } else {
         const data = await res.json();
-        alert(`신고 횟수 초기화 실패: ${data.message || res.statusText}`);
+        alert(`초기화 실패: ${data.message || res.statusText}`);
       }
     } catch (err) {
-      console.error('Error resetting report count:', err);
-      alert('신고 횟수 초기화 중 오류가 발생했습니다.');
+      console.error('Error resetting reports:', err);
+      alert('초기화 중 오류가 발생했습니다.');
     }
   };
 
@@ -246,9 +245,6 @@ const ReportedItems = () => {
           {items.map(item => (
             <div key={item._id} style={{ cursor: 'pointer', padding: '5px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p onClick={() => setSelectedItem(item)}><strong>{item.title}</strong> (신고: {item.reportCount}회)</p>
-              <button onClick={() => handleResetReportCount(item._id)} style={{ marginLeft: '10px', backgroundColor: 'blue', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
-                초기화
-              </button>
             </div>
           ))}
         </div>
@@ -258,6 +254,9 @@ const ReportedItems = () => {
               <h4>'{selectedItem.title}' 신고 내역</h4>
               <button onClick={() => handleDeleteAllReports(selectedItem._id)} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
                 신고내역 전체 삭제하기
+              </button>
+              <button onClick={() => handleResetReports(selectedItem._id)} style={{ marginLeft: '10px', backgroundColor: 'green', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                신고 초기화
               </button>
               {reports.length > 0 ? (
                 <ul>

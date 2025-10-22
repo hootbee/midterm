@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportCount } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
@@ -56,9 +56,10 @@ router.put('/:id', authMiddleware, updateAuctionItem);
 // @access  Private
 router.delete('/:id', authMiddleware, deleteAuctionItem);
 
-// @route   PUT /api/auctions/:id/reset-report-count
-// @desc    Reset report count for an auction item (Admin only)
+
+// @route   PUT /api/auctions/:id/reset-reports
+// @desc    Reset all reports for an auction item (Admin only)
 // @access  Admin
-router.put('/:id/reset-report-count', authMiddleware, adminMiddleware, resetReportCount);
+router.put('/:id/reset-reports', authMiddleware, adminMiddleware, resetReportsForItem);
 
 module.exports = router;
