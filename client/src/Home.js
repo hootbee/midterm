@@ -291,6 +291,7 @@ function Home() {
         <>
           <button onClick={handleLogout}>로그아웃</button>
           <Link to="/profile"><button style={{ marginLeft: '10px' }}>개인 프로필가기</button></Link>
+          <Link to="/my-bids"><button style={{ marginLeft: '10px' }}>입찰 내역</button></Link>
           {isAdmin && (
             <Link to="/admin"><button style={{ marginLeft: '10px' }}>관리자 페이지</button></Link>
           )}

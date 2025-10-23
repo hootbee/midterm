@@ -278,6 +278,18 @@ const resetReportsForItem = async (req, res) => {
   }
 };
 
+
+const getBidAuctions = async (req, res) => {
+  try {
+    const bidderUuid = req.user.uuid; // from authMiddleware
+    const items = await AuctionItem.find({ 'bids.bidderUuid': bidderUuid }).sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
@@ -288,4 +300,5 @@ module.exports = {
   reportAuctionItem,
   getReportedItems,
   resetReportsForItem,
+  getBidAuctions,
 };

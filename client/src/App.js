@@ -10,6 +10,7 @@ import PrivateRoute from './PrivateRoute';
 import LoggedInRoute from './LoggedInRoute';
 import Profile from './Profile';
 import CreateAuctionItem from './CreateAuctionItem';
+import MyBids from './MyBids';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +56,7 @@ function App() {
           <Route path="/create-auction" element={<LoggedInRoute><CreateAuctionItem /></LoggedInRoute>} />
           <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
           <Route path="/profile" element={<LoggedInRoute><Profile /></LoggedInRoute>} />
+          <Route path="/my-bids" element={<LoggedInRoute><MyBids /></LoggedInRoute>} />
         </Routes>
       </header>
     </div>
