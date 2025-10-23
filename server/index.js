@@ -10,6 +10,50 @@ const userRoutes = require('./routes/userRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 
+// --- Swagger Setup ---
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Auction API',
+      version: '1.0.0',
+      description: 'API documentation for the Auction application',
+      contact: {
+        name: 'Developer',
+        email: 'developer@example.com',
+      },
+    },
+    servers: [
+      {
+        url: 'http://localhost:3001',
+        description: 'Development server',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
+  },
+  apis: ['./routes/*.js'], // Path to the API docs (route files)
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+// --- End Swagger Setup ---
+
+
 // Initialize
 const app = express();
 
@@ -30,6 +74,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Added this for consistency
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/private_uploads', express.static(path.join(__dirname, 'private_uploads'))); // Added this for consistency
+
+// --- Swagger UI Route ---
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// --- End Swagger UI Route ---
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -81,6 +129,7 @@ const startServer = async () => {
 
       httpServer.listen(port, () => {
         console.log(`✅ Backend server with Socket.IO listening at http://localhost:${port}`);
+        console.log(`📖 Swagger UI available at http://localhost:${port}/api-docs`);
       });
   } catch (error) {
       console.error('❌ Failed to start the server:', error);
