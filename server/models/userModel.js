@@ -198,6 +198,25 @@ const updateBalanceByUuid = async (uuid, newBalance) => {
   }
 };
 
+
+const findAllUsers = async ({ page, limit }) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const offset = (page - 1) * limit;
+    const query = 'SELECT uuid, name, email, student_id, reputation_score, created_at, admin, balance FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    const users = await conn.query(query, [limit, offset]);
+
+    const totalQuery = 'SELECT COUNT(*) as count FROM users';
+    const totalRows = await conn.query(totalQuery);
+    const totalUsers = totalRows[0].count;
+
+    return { users, totalUsers };
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -209,4 +228,5 @@ module.exports = {
   updateUserByUuid,
   updateReputationByUuid,
   updateBalanceByUuid,
+  findAllUsers,
 };

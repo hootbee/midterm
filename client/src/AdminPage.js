@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
+
 function AdminPage() {
-  const [view, setView] = useState('userSearch'); // 'userSearch' or 'reportedItems'
+  const [view, setView] = useState('userSearch'); // 'userSearch', 'reportedItems', or 'allUsers'
 
   return (
     <div>
@@ -9,13 +10,96 @@ function AdminPage() {
       <nav>
         <button onClick={() => setView('userSearch')}>사용자 검색</button>
         <button onClick={() => setView('reportedItems')} style={{ marginLeft: '10px' }}>신고된 게시물</button>
+        <button onClick={() => setView('allUsers')} style={{ marginLeft: '10px' }}>모든 사용자 조회</button>
       </nav>
 
       {view === 'userSearch' && <UserSearch />}
       {view === 'reportedItems' && <ReportedItems />}
+      {view === 'allUsers' && <AllUsers />}
     </div>
   );
 }
+
+const AllUsers = () => {
+  const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication error. Please log in again.');
+        return;
+      }
+      try {
+        const res = await fetch(`/api/users?page=${currentPage}&limit=10`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUsers(data.users);
+          setTotalPages(data.totalPages);
+          setError('');
+        } else {
+          setError(data.message || 'Failed to fetch users.');
+        }
+      } catch (err) {
+        setError('An error occurred while fetching users.');
+        console.error('Fetch users error:', err);
+      }
+    };
+
+    fetchUsers();
+  }, [currentPage]);
+
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <h3>모든 사용자 목록</h3>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid black' }}>
+            <th style={{ padding: '8px', textAlign: 'left' }}>이름</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>이메일</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>학번</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>평판</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>잔액</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>가입일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(user => (
+            <tr key={user.uuid} style={{ borderBottom: '1px solid #ccc' }}>
+              <td style={{ padding: '8px' }}>{user.name}</td>
+              <td style={{ padding: '8px' }}>{user.email}</td>
+              <td style={{ padding: '8px' }}>{user.student_id}</td>
+              <td style={{ padding: '8px' }}>{user.reputation_score}</td>
+              <td style={{ padding: '8px' }}>{user.balance.toLocaleString()}원</td>
+              <td style={{ padding: '8px' }}>{new Date(user.created_at).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+          이전
+        </button>
+        <span style={{ margin: '0 10px' }}>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages}>
+          다음
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 
 const UserSearch = () => {
   const [uuid, setUuid] = useState('');

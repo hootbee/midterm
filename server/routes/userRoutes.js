@@ -1,8 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile, updateUserReputation, updateUserBalance} = require('../controllers/userController');
+const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile, updateUserReputation, updateUserBalance, getAllUsers} = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
+
+
+// @route   GET /api/users
+// @desc    Get all users (Admin only)
+// @access  Admin
+router.get('/', authMiddleware, adminMiddleware, getAllUsers);
 
 router.post('/signup', signup);
 router.post('/login', login);

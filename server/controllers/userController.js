@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid, findAllUsers } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -254,6 +254,29 @@ const updateUserBalance = async (req, res) => {
   }
 };
 
+
+const getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+
+    const { users, totalUsers } = await findAllUsers({ page, limit });
+
+    // Convert totalUsers to Number if it's a BigInt
+    const numericTotalUsers = Number(totalUsers);
+
+    res.json({
+      users,
+      totalUsers: numericTotalUsers,
+      totalPages: Math.ceil(numericTotalUsers / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -263,4 +286,5 @@ module.exports = {
   updateUserProfile,
   updateUserReputation,
   updateUserBalance,
+  getAllUsers,
 };
