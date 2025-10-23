@@ -1,6 +1,6 @@
 const socketAuthMiddleware = require('./middleware/socketAuthMiddleware');
 const { AuctionItem, findById } = require('./models/auctionItemModel');
-const { logBid } = require('./models/userModel');
+const { logBid, findUserByUuid } = require('./models/userModel');
 
 function initializeSocket(io) {
   io.use(socketAuthMiddleware); // Apply the auth middleware to all connections
@@ -18,6 +18,15 @@ function initializeSocket(io) {
     // Handler for a new bid
     socket.on('new_bid', async ({ itemId, bidAmount }) => {
       try {
+        // --- Balance Check ---
+        const bidder = await findUserByUuid(user.uuid);
+        if (!bidder) {
+            return socket.emit('bid_error', { message: '사용자 정보를 찾을 수 없습니다.' });
+        }
+        if (bidder.balance < bidAmount) {
+            return socket.emit('bid_error', { message: `잔액이 부족합니다. (현재 잔액: ${bidder.balance.toLocaleString()}원)` });
+        }
+
         const item = await findById(itemId);
 
         // --- Validation ---
