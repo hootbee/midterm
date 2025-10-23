@@ -82,6 +82,44 @@ function Profile() {
     }
   };
 
+  const handleChargeBalance = async () => {
+    const amount = window.prompt("얼마를 충전하시겠습니까?");
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      alert("올바른 금액을 입력해주세요.");
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/users/balance', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert(`충전이 완료되었습니다. 현재 잔액: ${data.newBalance.toLocaleString()}원`);
+        // Update user state to reflect new balance
+        setUser(prevUser => ({ ...prevUser, balance: data.newBalance }));
+      } else {
+        const data = await res.json();
+        alert(`충전 실패: ${data.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error('잔액 충전 오류:', err);
+      alert('잔액 충전 중 오류가 발생했습니다.');
+    }
+  };
+
   if (loading) {
     return <div>로딩 중...</div>;
   }
@@ -129,6 +167,7 @@ function Profile() {
             </p>
             <p><strong>UUID:</strong> {user.uuid}</p>
             <p><strong>평판 점수:</strong> {user.reputation_score}</p>
+            <p><strong>잔액:</strong> {user.balance ? user.balance.toLocaleString() : 0}원</p>
             <p><strong>가입일:</strong> {new Date(user.created_at).toLocaleString()}</p>
           </>
         ) : (
@@ -136,8 +175,8 @@ function Profile() {
             <p><strong>이메일:</strong> {user.email}</p>
             <p><strong>UUID:</strong> {user.uuid}</p>
             <p><strong>이름:</strong> {user.name}</p>
-            <p><strong>학번:</strong> {user.student_id}</p>
             <p><strong>평판 점수:</strong> {user.reputation_score}</p>
+            <p><strong>잔액:</strong> {user.balance ? user.balance.toLocaleString() : 0}원</p>
             <p><strong>가입일:</strong> {new Date(user.created_at).toLocaleString()}</p>
           </>
         )}
@@ -162,6 +201,9 @@ function Profile() {
           취소
         </button>
       )}
+      <button onClick={handleChargeBalance} style={{ marginTop: '20px', marginLeft: '10px' }}>
+        결제하기
+      </button>
     </div>
   );
 }

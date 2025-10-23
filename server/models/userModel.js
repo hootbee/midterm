@@ -36,6 +36,23 @@ const initializeMariaDB = async () => {
       console.log("'admin' column already exists in 'users' table.");
     }
 
+    // Check if the balance column exists
+    const [balanceColumn] = await conn.query(
+      `SELECT * 
+       FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = '202121134' 
+       AND TABLE_NAME = 'users' 
+       AND COLUMN_NAME = 'balance';`
+    );
+
+    if (!balanceColumn) {
+      console.log("'users' table is missing the 'balance' column, adding it...");
+      await conn.query("ALTER TABLE users ADD COLUMN balance INT NOT NULL DEFAULT 0;");
+      console.log("'balance' column added successfully.");
+    } else {
+      console.log("'balance' column already exists in 'users' table.");
+    }
+
     await conn.query(`
       CREATE TABLE IF NOT EXISTS bid_logs (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,7 +141,7 @@ const findUserByUuid = async (uuid) => {
   let conn;
   try {
     conn = await pool.getConnection();
-    const query = 'SELECT email, uuid, name, student_id, reputation_score, created_at FROM users WHERE uuid = ?';
+    const query = 'SELECT email, uuid, name, student_id, reputation_score, created_at, balance FROM users WHERE uuid = ?';
     const rows = await conn.query(query, [uuid]);
     return rows[0]; // Return the first user found, or undefined
   } finally {
@@ -169,6 +186,18 @@ const updateReputationByUuid = async (uuid, newScore) => {
   }
 };
 
+const updateBalanceByUuid = async (uuid, newBalance) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'UPDATE users SET balance = ? WHERE uuid = ?';
+    const result = await conn.query(query, [newBalance, uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -179,4 +208,5 @@ module.exports = {
   deleteUserByUuid,
   updateUserByUuid,
   updateReputationByUuid,
+  updateBalanceByUuid,
 };

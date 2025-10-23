@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -220,6 +220,40 @@ const updateUserReputation = async (req, res) => {
   }
 };
 
+const updateUserBalance = async (req, res) => {
+  try {
+    const { uuid } = req.user; // Get user from token
+    const { amount } = req.body;
+
+    const amountToAdd = parseInt(amount, 10);
+    if (isNaN(amountToAdd) || amountToAdd <= 0) {
+      return res.status(400).json({ message: 'Invalid amount.' });
+    }
+
+    // Get current balance
+    const user = await findUserByUuid(uuid);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const newBalance = user.balance + amountToAdd;
+
+    // Update balance
+    const result = await updateBalanceByUuid(uuid, newBalance);
+
+    if (result.affectedRows === 0) {
+      // This should theoretically not happen if findUserByUuid succeeded
+      return res.status(404).json({ message: 'User not found during update.' });
+    }
+
+    res.json({ message: 'Balance updated successfully.', newBalance });
+
+  } catch (error) {
+    console.error('Error updating balance:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -228,4 +262,5 @@ module.exports = {
   deleteUser,
   updateUserProfile,
   updateUserReputation,
+  updateUserBalance,
 };
