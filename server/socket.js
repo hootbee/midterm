@@ -1,6 +1,11 @@
 const socketAuthMiddleware = require('./middleware/socketAuthMiddleware');
 const { AuctionItem, findById } = require('./models/auctionItemModel');
 const { logBid, findUserByUuid } = require('./models/userModel');
+const DMMessage = require('./models/dmMessageModel');
+const DMRoom = require('./models/dmRoomModel');
+
+// Map to store user UUID to socket ID for direct messaging
+const userSocketMap = new Map(); // userUuid -> socket.id
 
 function initializeSocket(io) {
   io.use(socketAuthMiddleware); // Apply the auth middleware to all connections
@@ -9,10 +14,61 @@ function initializeSocket(io) {
     const user = socket.user;
     console.log(`User connected: ${user.email} (Socket ID: ${socket.id})`);
 
-    // Handler for joining a room
+    // Store user's socket ID
+    userSocketMap.set(user.uuid, socket.id);
+
+    // Handler for joining a room (for auction items)
     socket.on('join_room', (itemId) => {
       socket.join(itemId);
       console.log(`${user.email} joined room for item: ${itemId}`);
+    });
+
+    // Handler for joining a DM room
+    socket.on('dm:joinRoom', (roomId) => {
+      socket.join(roomId);
+      console.log(`${user.email} joined DM room: ${roomId}`);
+    });
+
+    // Handler for sending a DM message
+    socket.on('dm:message', async ({ roomId, receiverUuid, content }) => {
+      try {
+        if (!roomId || !receiverUuid || !content) {
+          return socket.emit('dm:error', { message: 'Room ID, receiver UUID, and content are required.' });
+        }
+
+        const dmRoom = await DMRoom.findById(roomId);
+        if (!dmRoom) {
+          return socket.emit('dm:error', { message: 'DM room not found.' });
+        }
+
+        // Ensure sender is a participant in the room
+        if (!dmRoom.participants.includes(user.uuid)) {
+          return socket.emit('dm:error', { message: 'Not authorized to send message in this room.' });
+        }
+
+        const newMessage = new DMMessage({
+          roomId,
+          senderUuid: user.uuid,
+          receiverUuid,
+          content,
+        });
+        await newMessage.save();
+        console.log('DMMessage saved:', newMessage._id);
+
+        // Update last message in DM room
+        dmRoom.lastMessage = newMessage._id;
+        dmRoom.updatedAt = new Date();
+        await dmRoom.save();
+        console.log('DMRoom lastMessage updated for room:', dmRoom._id);
+
+        // Emit message to all participants in the room
+        io.to(roomId).emit('dm:message', newMessage);
+
+        console.log(`DM message sent in room ${roomId} from ${user.uuid} to ${receiverUuid}: ${content}`);
+      } catch (error) {
+        console.error('Error sending DM message:', error);
+        socket.emit('dm:error', { message: 'DM 메시지 전송 중 서버 오류가 발생했습니다.' });
+      }
     });
 
     // Handler for a new bid
@@ -78,6 +134,7 @@ function initializeSocket(io) {
 
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${user.email}`);
+      userSocketMap.delete(user.uuid); // Remove user from map on disconnect
     });
   });
 }

@@ -11,6 +11,7 @@ import LoggedInRoute from './LoggedInRoute';
 import Profile from './Profile';
 import CreateAuctionItem from './CreateAuctionItem';
 import MyBids from './MyBids';
+import DMPage from './DMPage';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,6 +30,7 @@ function App() {
       <header className="App-header">
         <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
           <Link to="/"><button>메인화면으로 가기</button></Link>
+          <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
         </div>
 
         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -57,6 +59,7 @@ function App() {
           <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
           <Route path="/profile" element={<LoggedInRoute><Profile /></LoggedInRoute>} />
           <Route path="/my-bids" element={<LoggedInRoute><MyBids /></LoggedInRoute>} />
+          <Route path="/dm" element={<LoggedInRoute><DMPage /></LoggedInRoute>} />
         </Routes>
       </header>
     </div>
