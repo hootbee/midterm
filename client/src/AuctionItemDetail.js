@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode';
+import CommentSection from './CommentSection';
 
 const detailContainerStyle = {
   padding: '20px',
@@ -300,6 +301,7 @@ function AuctionItemDetail() {
           ))}
         </ul>
       </div>
+      <CommentSection itemId={id} />
     </div>
   );
 }
