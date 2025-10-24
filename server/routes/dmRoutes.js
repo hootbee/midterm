@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOrCreateDMRoom, getDMRooms, getDMMessages } = require('../controllers/dmController');
+const { getOrCreateDMRoom, getDMRooms, getDMMessages,leaveDMRoom } = require('../controllers/dmController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -152,5 +152,34 @@ router.get('/rooms', authMiddleware, getDMRooms);
  *         description: Server error
  */
 router.get('/room/:roomId/messages', authMiddleware, getDMMessages);
+
+/**
+ * @swagger
+ * /api/dm/room/{roomId}/leave:
+ *   delete:
+ *     summary: Leave a DM room
+ *     tags: [Direct Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the DM room to leave
+ *     responses:
+ *       200:
+ *         description: Successfully left DM room
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized to leave this DM room
+ *       404:
+ *         description: DM room not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/room/:roomId/leave', authMiddleware, leaveDMRoom);
 
 module.exports = router;

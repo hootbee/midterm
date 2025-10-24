@@ -11,6 +11,9 @@ function DMPage() {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [error, setError] = useState(null);
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [contextMenuRoomId, setContextMenuRoomId] = useState(null);
   const socket = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -19,6 +22,46 @@ function DMPage() {
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Handle context menu display
+  const handleContextMenu = (e, roomId) => {
+    e.preventDefault();
+    setContextMenuVisible(true);
+    setContextMenuPosition({ x: e.pageX, y: e.pageY });
+    setContextMenuRoomId(roomId);
+  };
+
+  // Handle leaving a DM room
+  const handleLeaveRoom = async () => {
+    if (!contextMenuRoomId || !token) return;
+
+    try {
+      const res = await fetch(`/api/dm/room/${contextMenuRoomId}/leave`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'DM 방 나가기 실패');
+      }
+
+      alert('DM 방을 나갔습니다.');
+      setDmRooms((prevRooms) => prevRooms.filter(room => room._id !== contextMenuRoomId));
+      if (selectedRoom?._id === contextMenuRoomId) {
+        setSelectedRoom(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      setError(err.message);
+      alert(`DM 방 나가기 오류: ${err.message}`);
+    } finally {
+      setContextMenuVisible(false);
+      setContextMenuRoomId(null);
+    }
   };
 
   // Initialize Socket.IO connection
@@ -53,8 +96,15 @@ function DMPage() {
       console.log('Disconnected from Socket.IO server');
     });
 
+    const handleClickOutside = () => {
+      setContextMenuVisible(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
     return () => {
       socket.current.disconnect();
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [token]);
 
@@ -191,6 +241,7 @@ function DMPage() {
           <div
             key={room._id}
             onClick={() => setSelectedRoom(room)}
+            onContextMenu={(e) => handleContextMenu(e, room._id)} // Attach context menu event
             style={{
               padding: '10px',
               borderBottom: '1px solid #eee',
@@ -203,6 +254,36 @@ function DMPage() {
             {room.lastMessage && <p style={{ fontSize: '0.8em', color: '#666' }}>{room.lastMessage.content}</p>}
           </div>
         ))}
+
+        {/* Custom Context Menu */}
+        {contextMenuVisible && (
+          <div
+            style={{
+              position: 'absolute',
+              top: contextMenuPosition.y,
+              left: contextMenuPosition.x,
+              backgroundColor: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={handleLeaveRoom}
+              style={{
+                width: '100%',
+                padding: '8px 15px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              방 나가기
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Message Area */}

@@ -84,8 +84,49 @@ const getDMMessages = async (req, res) => {
   }
 };
 
+// @desc    Leave a DM room
+// @route   DELETE /api/dm/room/:roomId/leave
+// @access  Private
+const leaveDMRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const currentUserUuid = req.user.uuid;
+
+    const dmRoom = await DMRoom.findById(roomId);
+
+    if (!dmRoom) {
+      return res.status(404).json({ message: 'DM room not found.' });
+    }
+
+    // Ensure the current user is a participant in the room
+    if (!dmRoom.participants.includes(currentUserUuid)) {
+      return res.status(403).json({ message: 'Not authorized to leave this DM room.' });
+    }
+
+    // Remove the current user from participants
+    dmRoom.participants = dmRoom.participants.filter(
+      (uuid) => uuid !== currentUserUuid
+    );
+
+    if (dmRoom.participants.length === 0) {
+      // If no participants left, delete all messages and the room
+      await DMMessage.deleteMany({ roomId: dmRoom._id });
+      await DMRoom.deleteOne({ _id: dmRoom._id });
+      return res.status(200).json({ message: 'DM room and all messages deleted successfully.' });
+    } else {
+      // Otherwise, save the updated room
+      await dmRoom.save();
+      return res.status(200).json({ message: 'Successfully left DM room.' });
+    }
+  } catch (error) {
+    console.error('Error leaving DM room:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   getOrCreateDMRoom,
   getDMRooms,
   getDMMessages,
+  leaveDMRoom,
 };
