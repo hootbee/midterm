@@ -53,6 +53,7 @@ const commentDateStyle = {
 function CommentSection({ itemId }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null); // Stores the _id of the comment being replied to
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -91,6 +92,11 @@ function CommentSection({ itemId }) {
       return;
     }
 
+    const body = { content: newComment };
+    if (replyingTo) {
+      body.parentId = replyingTo;
+    }
+
     try {
       const res = await fetch(`/api/auctions/${itemId}/comments`, {
         method: 'POST',
@@ -98,11 +104,12 @@ function CommentSection({ itemId }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ content: newComment }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
         setNewComment('');
+        setReplyingTo(null); // Reset replyingTo after successful submission
         fetchComments(); // Refresh comments after posting
       } else {
         const data = await res.json();
@@ -112,6 +119,41 @@ function CommentSection({ itemId }) {
       alert(`댓글 작성 오류: ${err.message}`);
     }
   };
+
+  const renderComment = (comment, depth) => (
+    <li key={comment._id} style={commentItemStyle}>
+      <div>
+        <span style={commentAuthorStyle}>{comment.nickname}</span>
+        <span style={commentDateStyle}>{new Date(comment.createdAt).toLocaleString()}</span>
+        {depth < 1 && (
+          <button
+            onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
+            style={{ ...commentButtonStyle, marginLeft: '10px', padding: '5px 10px', fontSize: '0.8em' }}
+          >
+            {replyingTo === comment._id ? '취소' : '답글'}
+          </button>
+        )}
+      </div>
+      <p>{comment.content}</p>
+      {replyingTo === comment._id && (
+        <form onSubmit={handleCommentSubmit} style={{ ...commentFormStyle, marginLeft: '20px' }}>
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="답글을 입력하세요..."
+            style={commentInputStyle}
+          />
+          <button type="submit" style={commentButtonStyle}>등록</button>
+        </form>
+      )}
+      {comment.replies && comment.replies.length > 0 && (
+        <ul style={{ ...commentListStyle, marginLeft: '20px' }}>
+          {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+        </ul>
+      )}
+    </li>
+  );
 
   if (loading) return <div>댓글 로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
@@ -130,15 +172,7 @@ function CommentSection({ itemId }) {
         <button type="submit" style={commentButtonStyle}>등록</button>
       </form>
       <ul style={commentListStyle}>
-        {comments.map((comment) => (
-          <li key={comment._id} style={commentItemStyle}>
-            <div>
-              <span style={commentAuthorStyle}>{comment.nickname}</span>
-              <span style={commentDateStyle}>{new Date(comment.createdAt).toLocaleString()}</span>
-            </div>
-            <p>{comment.content}</p>
-          </li>
-        ))}
+        {comments.map((comment) => renderComment(comment, 0))}
       </ul>
     </div>
   );
