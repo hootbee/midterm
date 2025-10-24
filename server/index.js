@@ -12,6 +12,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const dmRoutes = require('./routes/dmRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
+const favoriteAuctionRoutes = require('./routes/favoriteAuctionRoutes');
 
 // --- Swagger Setup ---
 const swaggerUi = require('swagger-ui-express');
@@ -50,7 +51,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./routes/*.js'], // Path to the API docs (route files)
+  apis: [path.join(__dirname, 'routes/*.js')], // Path to the API docs (route files)
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
@@ -89,6 +90,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api', commentRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/favorites', favoriteAuctionRoutes);
 
 // Default route
 app.get('/', (req, res) => {

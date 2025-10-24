@@ -32,9 +32,41 @@ function AuctionItemDetail() {
   const [newEndTime, setNewEndTime] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false); // New state for favorite status
   const { id } = useParams();
   const socketRef = useRef(null);
   const navigate = useNavigate();
+
+  // Function to toggle favorite status
+  const handleToggleFavorite = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/favorites/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ auctionItemId: id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsFavorited(data.favorited);
+        alert(data.message);
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '즐겨찾기 상태 변경 실패');
+      }
+    } catch (err) {
+      alert(`즐겨찾기 오류: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -54,7 +86,34 @@ function AuctionItemDetail() {
         setLoading(false);
       }
     };
+
+    const fetchFavoriteStatus = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return; // Cannot fetch favorite status without being logged in
+
+      try {
+        const res = await fetch(`/api/favorites/status/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsFavorited(data.isFavorited);
+        } else if (res.status === 401) {
+          // User is not authenticated, so not favorited
+          setIsFavorited(false);
+        } else {
+          throw new Error('즐겨찾기 상태를 불러오는 데 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('Error fetching favorite status:', err);
+        setIsFavorited(false);
+      }
+    };
+
     fetchItem();
+    fetchFavoriteStatus();
 
     const token = localStorage.getItem('token');
     if (token) {
@@ -240,6 +299,11 @@ function AuctionItemDetail() {
       <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
       <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
       <p><strong>마감 시간:</strong> {new Date(item.endTime).toLocaleString()}</p>
+      {token && (
+        <button onClick={handleToggleFavorite} style={{ marginTop: '10px', backgroundColor: isFavorited ? '#ffc107' : '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
+          {isFavorited ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
+        </button>
+      )}
       {isSeller && !isAuctionOver && (
         <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
             <label>마감 시간 수정: </label>
