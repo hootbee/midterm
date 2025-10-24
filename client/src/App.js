@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import './App.css';
 import Home from './Home';
@@ -12,11 +12,38 @@ import Profile from './Profile';
 import CreateAuctionItem from './CreateAuctionItem';
 import MyBids from './MyBids';
 import DMPage from './DMPage';
+import AnnouncementAdminPage from './AnnouncementAdminPage';
+import AnnouncementPage from './AnnouncementPage';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('sellerUuid'); // Default search type
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const decodeToken = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = decodeToken(token);
+      if (decoded && decoded.admin) {
+        setIsAdmin(true);
+      }
+    }
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -31,6 +58,10 @@ function App() {
         <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
           <Link to="/"><button>메인화면으로 가기</button></Link>
           <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
+          <Link to="/announcements"><button style={{ marginLeft: '10px' }}>공지사항</button></Link>
+          {isAdmin && (
+            <Link to="/admin/announcements"><button style={{ marginLeft: '10px' }}>공지사항 관리</button></Link>
+          )}
         </div>
 
         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -60,6 +91,8 @@ function App() {
           <Route path="/profile" element={<LoggedInRoute><Profile /></LoggedInRoute>} />
           <Route path="/my-bids" element={<LoggedInRoute><MyBids /></LoggedInRoute>} />
           <Route path="/dm" element={<LoggedInRoute><DMPage /></LoggedInRoute>} />
+          <Route path="/announcements" element={<AnnouncementPage />} />
+          <Route path="/admin/announcements" element={<PrivateRoute><AnnouncementAdminPage /></PrivateRoute>} />
         </Routes>
       </header>
     </div>

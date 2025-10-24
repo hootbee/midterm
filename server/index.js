@@ -11,6 +11,7 @@ const auctionRoutes = require('./routes/auctionRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const dmRoutes = require('./routes/dmRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 // --- Swagger Setup ---
 const swaggerUi = require('swagger-ui-express');
@@ -87,6 +88,7 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api', commentRoutes);
 app.use('/api/dm', dmRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Default route
 app.get('/', (req, res) => {

@@ -247,6 +247,8 @@ function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userUuid, setUserUuid] = useState(null);
+  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true); // State for banner visibility
+  const [bannerAnnouncement, setBannerAnnouncement] = useState(null); // State for fetched banner content
 
   const decodeToken = (token) => {
     try {
@@ -274,6 +276,26 @@ function Home() {
         }
       }
     }
+
+    // Fetch banner announcement
+    const fetchBanner = async () => {
+      try {
+        const res = await fetch('/api/announcements/banner');
+        if (res.ok) {
+          const data = await res.json();
+          setBannerAnnouncement(data);
+        } else if (res.status === 404) {
+          setBannerAnnouncement(null); // No banner active
+        } else {
+          throw new Error('배너 공지사항을 불러오는 데 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('Error fetching banner announcement:', err);
+        setBannerAnnouncement(null); // Ensure banner is hidden on error
+      }
+    };
+    fetchBanner();
+
   }, []);
 
   const handleLogout = () => {
@@ -286,6 +308,33 @@ function Home() {
 
   return (
     <div>
+      {showAnnouncementBanner && bannerAnnouncement && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          color: '#856404',
+          padding: '10px',
+          marginBottom: '20px',
+          border: '1px solid #ffeeba',
+          borderRadius: '5px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span>✨ {bannerAnnouncement.title}</span>
+          <button
+            onClick={() => setShowAnnouncementBanner(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.2em',
+              cursor: 'pointer',
+              color: '#856404',
+            }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <h1>메인 화면</h1>
       {isLoggedIn ? (
         <>
@@ -305,6 +354,6 @@ function Home() {
       <ItemList isLoggedIn={isLoggedIn} isAdmin={isAdmin} userUuid={userUuid} />
     </div>
   );
-}
+};
 
 export default Home;
