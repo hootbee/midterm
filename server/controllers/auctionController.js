@@ -1,6 +1,6 @@
 const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById, resetReportCountById } = require('../models/auctionItemModel');
 const { Report } = require('../models/reportModel');
-const { findUserByEmail, findUserByUuid, updateReputationByUuid, findUsersByUuids } = require('../models/userModel');
+const { findUserByEmail, findUserByUuid, updateReputationByUuid, findUsersByUuids, updateBalanceByUuid } = require('../models/userModel');
 const { sendSystemDM } = require('./dmController'); // Import sendSystemDM
 fs = require('fs');
 const path = require('path');
@@ -292,6 +292,26 @@ const markPaid = async (req, res) => {
     if (item.transactionStatus === 'paid') {
       return res.status(400).json({ message: 'Item already marked as paid.' });
     }
+
+    const winner = await findUserByUuid(item.winnerUuid);
+    if (!winner) {
+      return res.status(404).json({ message: 'Winner not found.' });
+    }
+
+    if (winner.balance < item.currentPrice) {
+      return res.status(400).json({ message: 'Insufficient balance.' });
+    }
+
+    const seller = await findUserByUuid(item.sellerUuid);
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found.' });
+    }
+
+    const newWinnerBalance = winner.balance - item.currentPrice;
+    const newSellerBalance = seller.balance + item.currentPrice;
+
+    await updateBalanceByUuid(item.winnerUuid, newWinnerBalance);
+    await updateBalanceByUuid(item.sellerUuid, newSellerBalance);
 
     item.transactionStatus = 'paid';
     const updatedItem = await item.save();

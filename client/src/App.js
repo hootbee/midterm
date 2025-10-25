@@ -31,7 +31,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
+        <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1 }}>
           <Link to="/"><button>메인화면으로 가기</button></Link>
           <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
           <Link to="/announcements"><button style={{ marginLeft: '10px' }}>공지사항</button></Link>
