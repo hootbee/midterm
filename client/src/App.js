@@ -13,7 +13,7 @@ import CreateAuctionItem from './CreateAuctionItem';
 import MyBids from './MyBids';
 import MySelling from './MySelling'; // Import MySelling component
 import DMPage from './DMPage';
-import AnnouncementAdminPage from './AnnouncementAdminPage';
+
 import AnnouncementPage from './AnnouncementPage';
 
 function App() {
@@ -60,9 +60,7 @@ function App() {
           <Link to="/"><button>메인화면으로 가기</button></Link>
           <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
           <Link to="/announcements"><button style={{ marginLeft: '10px' }}>공지사항</button></Link>
-          {isAdmin && (
-            <Link to="/admin/announcements"><button style={{ marginLeft: '10px' }}>공지사항 관리</button></Link>
-          )}
+
         </div>
 
         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -94,7 +92,7 @@ function App() {
           <Route path="/my-selling" element={<LoggedInRoute><MySelling /></LoggedInRoute>} /> {/* New route for MySelling */}
           <Route path="/dm" element={<LoggedInRoute><DMPage /></LoggedInRoute>} />
           <Route path="/announcements" element={<AnnouncementPage />} />
-          <Route path="/admin/announcements" element={<PrivateRoute><AnnouncementAdminPage /></PrivateRoute>} />
+
         </Routes>
       </header>
     </div>
