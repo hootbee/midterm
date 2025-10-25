@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode'; // Import jwtDecode
@@ -121,6 +120,41 @@ const MyBids = () => {
     }
   };
 
+  const handleClearHistory = async () => {
+    if (!window.confirm('정말로 모든 입찰 내역을 숨기시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    const auctionIds = items.map(item => item._id);
+
+    try {
+      const res = await fetch('/api/auctions/hide-for-user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ auctionIds }),
+      });
+
+      if (res.ok) {
+        alert('입찰 내역이 성공적으로 숨김 처리되었습니다.');
+        fetchMyBids(); // Refresh the list
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '내역 숨김에 실패했습니다.');
+      }
+    } catch (err) {
+      alert(`오류: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -132,6 +166,11 @@ const MyBids = () => {
   return (
     <div className="container">
       <h1>My Bidded Auctions</h1>
+      {items.length > 0 && (
+        <button onClick={handleClearHistory} style={{ marginBottom: '20px', backgroundColor: '#dc3545', color: 'white' }}>
+          모든 내역 삭제
+        </button>
+      )}
       {items.length === 0 ? (
         <p>You have not bid on any items yet.</p>
       ) : (

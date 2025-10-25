@@ -446,8 +446,32 @@ const resetReportsForItem = async (req, res) => {
 const getBidAuctions = async (req, res) => {
   try {
     const bidderUuid = req.user.uuid; // from authMiddleware
-    const items = await AuctionItem.find({ 'bids.bidderUuid': bidderUuid }).sort({ createdAt: -1 });
+    const items = await AuctionItem.find({ 
+      'bids.bidderUuid': bidderUuid,
+      hidden_for_bidders: { $ne: bidderUuid } 
+    }).sort({ createdAt: -1 });
     res.json(items);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+const hideAuctionsForBidder = async (req, res) => {
+  try {
+    const bidderUuid = req.user.uuid;
+    const { auctionIds } = req.body;
+
+    if (!Array.isArray(auctionIds)) {
+      return res.status(400).json({ message: 'auctionIds must be an array.' });
+    }
+
+    await AuctionItem.updateMany(
+      { _id: { $in: auctionIds }, 'bids.bidderUuid': bidderUuid },
+      { $addToSet: { hidden_for_bidders: bidderUuid } }
+    );
+
+    res.json({ message: 'Selected auctions have been hidden from your bid history.' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -484,4 +508,5 @@ module.exports = {
   markPaid,
   markCompleted,
   cancelAuction,
+  hideAuctionsForBidder,
 };
