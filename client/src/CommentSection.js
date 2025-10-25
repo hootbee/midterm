@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const commentSectionStyle = {
@@ -56,6 +55,21 @@ function CommentSection({ itemId }) {
   const [replyingTo, setReplyingTo] = useState(null); // Stores the _id of the comment being replied to
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const decodeToken = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
 
   const fetchComments = async () => {
     try {
@@ -74,6 +88,10 @@ function CommentSection({ itemId }) {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setCurrentUser(decodeToken(token));
+    }
     if (itemId) {
       fetchComments();
     }
@@ -120,40 +138,82 @@ function CommentSection({ itemId }) {
     }
   };
 
-  const renderComment = (comment, depth) => (
-    <li key={comment._id} style={commentItemStyle}>
-      <div>
-        <span style={commentAuthorStyle}>{comment.nickname}</span>
-        <span style={commentDateStyle}>{new Date(comment.createdAt).toLocaleString()}</span>
-        {depth < 1 && (
-          <button
-            onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
-            style={{ ...commentButtonStyle, marginLeft: '10px', padding: '5px 10px', fontSize: '0.8em' }}
-          >
-            {replyingTo === comment._id ? '취소' : '답글'}
-          </button>
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        fetchComments(); // Refresh comments after deleting
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '댓글 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      alert(`댓글 삭제 오류: ${err.message}`);
+    }
+  };
+
+  const renderComment = (comment, depth) => {
+    const canDelete = currentUser && (currentUser.admin || currentUser.uuid === comment.commenterUuid);
+
+    return (
+      <li key={comment._id} style={commentItemStyle}>
+        <div>
+          <span style={commentAuthorStyle}>{comment.nickname}</span>
+          <span style={commentDateStyle}>{new Date(comment.createdAt).toLocaleString()}</span>
+          {depth < 1 && (
+            <button
+              onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
+              style={{ ...commentButtonStyle, marginLeft: '10px', padding: '5px 10px', fontSize: '0.8em' }}
+            >
+              {replyingTo === comment._id ? '취소' : '답글'}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => handleDeleteComment(comment._id)}
+              style={{ ...commentButtonStyle, marginLeft: '10px', padding: '5px 10px', fontSize: '0.8em', backgroundColor: '#dc3545' }}
+            >
+              삭제
+            </button>
+          )}
+        </div>
+        <p>{comment.content}</p>
+        {replyingTo === comment._id && (
+          <form onSubmit={handleCommentSubmit} style={{ ...commentFormStyle, marginLeft: '20px' }}>
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="답글을 입력하세요..."
+              style={commentInputStyle}
+            />
+            <button type="submit" style={commentButtonStyle}>등록</button>
+          </form>
         )}
-      </div>
-      <p>{comment.content}</p>
-      {replyingTo === comment._id && (
-        <form onSubmit={handleCommentSubmit} style={{ ...commentFormStyle, marginLeft: '20px' }}>
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="답글을 입력하세요..."
-            style={commentInputStyle}
-          />
-          <button type="submit" style={commentButtonStyle}>등록</button>
-        </form>
-      )}
-      {comment.replies && comment.replies.length > 0 && (
-        <ul style={{ ...commentListStyle, marginLeft: '20px' }}>
-          {comment.replies.map((reply) => renderComment(reply, depth + 1))}
-        </ul>
-      )}
-    </li>
-  );
+        {comment.replies && comment.replies.length > 0 && (
+          <ul style={{ ...commentListStyle, marginLeft: '20px' }}>
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  }
 
   if (loading) return <div>댓글 로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
