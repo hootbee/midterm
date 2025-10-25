@@ -169,9 +169,40 @@ const deleteComment = async (req, res) => {
   }
 };
 
+// @desc    Delete all comments for a specific auction item
+// @route   DELETE /api/auctions/:auctionItemId/comments
+// @access  Private (seller or admin)
+const deleteCommentsForAuction = async (req, res) => {
+  try {
+    const { auctionItemId } = req.params;
+    const userUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const auctionItem = await findById(auctionItemId);
+    if (!auctionItem) {
+      return res.status(404).json({ message: 'Auction item not found.' });
+    }
+
+    if (auctionItem.sellerUuid !== userUuid && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to delete comments for this auction.' });
+    }
+
+    const result = await Comment.deleteMany({ auctionItemId });
+
+    res.status(200).json({
+      message: 'All comments for the auction deleted successfully.',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Error deleting comments for auction:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createComment,
   getComments,
   updateComment,
   deleteComment,
+  deleteCommentsForAuction,
 };

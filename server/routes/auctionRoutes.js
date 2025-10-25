@@ -444,8 +444,32 @@ router.post('/:id/report', authMiddleware, reportAuctionItem);
  *         description: Auction item not found
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Delete all report records for an auction item (Admin only)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to delete reports for
+ *     responses:
+ *       200:
+ *         description: Reports deleted successfully
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       403:
+ *         description: Forbidden, not an admin user
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
  */
 router.put('/:id/reset-reports', authMiddleware, adminMiddleware, resetReportsForItem);
+router.delete('/:id/reports', authMiddleware, adminMiddleware, resetReportsForItem);
 
 /**
  * @swagger
@@ -598,7 +622,33 @@ router.put('/:id/mark-completed', authMiddleware, markCompleted);
  *         description: Auction item not found
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Cancel an active auction (Seller or Admin)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to cancel
+ *     responses:
+ *       200:
+ *         description: Auction cancelled successfully
+ *       400:
+ *         description: Invalid status (only active auctions can be cancelled)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the seller or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
  */
 router.post('/:id/cancel', authMiddleware, cancelAuction);
+router.delete('/:id/cancel', authMiddleware, cancelAuction);
 
 module.exports = router;

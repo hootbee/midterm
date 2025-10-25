@@ -68,8 +68,49 @@ const getFavoriteStatus = async (req, res) => {
   }
 };
 
+// @desc    Remove a specific auction item from favorites
+// @route   DELETE /api/favorites/:auctionItemId
+// @access  Private
+const removeFavorite = async (req, res) => {
+  try {
+    const { auctionItemId } = req.params;
+    const userUuid = req.user.uuid;
+
+    const deletedFavorite = await FavoriteAuction.findOneAndDelete({ userUuid, auctionItemId });
+
+    if (!deletedFavorite) {
+      return res.status(404).json({ message: 'Favorite not found for this auction item.' });
+    }
+
+    res.status(200).json({ message: 'Favorite removed successfully.' });
+  } catch (error) {
+    console.error('Error removing favorite:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Remove all favorites for the authenticated user
+// @route   DELETE /api/favorites
+// @access  Private
+const clearFavorites = async (req, res) => {
+  try {
+    const userUuid = req.user.uuid;
+    const result = await FavoriteAuction.deleteMany({ userUuid });
+
+    res.status(200).json({
+      message: 'All favorites cleared successfully.',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Error clearing favorites:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   toggleFavorite,
   getFavorites,
   getFavoriteStatus,
+  removeFavorite,
+  clearFavorites,
 };

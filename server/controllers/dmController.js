@@ -125,6 +125,35 @@ const leaveDMRoom = async (req, res) => {
   }
 };
 
+// @desc    Permanently delete a DM room along with all messages
+// @route   DELETE /api/dm/room/:roomId
+// @access  Private (participants or admin)
+const deleteDMRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const currentUserUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const dmRoom = await DMRoom.findById(roomId);
+
+    if (!dmRoom) {
+      return res.status(404).json({ message: 'DM room not found.' });
+    }
+
+    if (!isAdmin && !dmRoom.participants.includes(currentUserUuid)) {
+      return res.status(403).json({ message: 'Not authorized to delete this DM room.' });
+    }
+
+    await DMMessage.deleteMany({ roomId: dmRoom._id });
+    await DMRoom.deleteOne({ _id: dmRoom._id });
+
+    res.status(200).json({ message: 'DM room and messages deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting DM room:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Helper function to send system-generated DMs
 const SYSTEM_UUID = 'SYSTEM'; // A unique UUID for the system sender
 let ioInstance; // To hold the Socket.IO instance
@@ -172,6 +201,7 @@ module.exports = {
   getDMRooms,
   getDMMessages,
   leaveDMRoom,
+  deleteDMRoom,
   sendSystemDM,
   setIoInstance, // Export setIoInstance to allow setting the io instance from index.js
 };

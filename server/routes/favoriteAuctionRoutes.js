@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { toggleFavorite, getFavorites, getFavoriteStatus } = require('../controllers/favoriteAuctionController');
+const { toggleFavorite, getFavorites, getFavoriteStatus, removeFavorite, clearFavorites } = require('../controllers/favoriteAuctionController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -96,11 +96,47 @@ router.post('/toggle', authMiddleware, toggleFavorite);
  *         description: Unauthorized
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Remove all favorite auction items for the authenticated user
+ *     tags: [Favorite Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Favorites cleared successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
  */
 router.get('/', authMiddleware, getFavorites);
+router.delete('/', authMiddleware, clearFavorites);
 
 /**
  * @swagger
+ * /api/favorites/{auctionItemId}:
+ *   delete:
+ *     summary: Remove a specific auction item from favorites
+ *     tags: [Favorite Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: auctionItemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to remove from favorites
+ *     responses:
+ *       200:
+ *         description: Auction item removed from favorites
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Favorite not found
+ *       500:
+ *         description: Server error
+ *
  * /api/favorites/status/{auctionItemId}:
  *   get:
  *     summary: Check if an auction item is favorited by the authenticated user
@@ -131,6 +167,7 @@ router.get('/', authMiddleware, getFavorites);
  *       500:
  *         description: Server error
  */
+router.delete('/:auctionItemId', authMiddleware, removeFavorite);
 router.get('/status/:auctionItemId', authMiddleware, getFavoriteStatus);
 
 module.exports = router;

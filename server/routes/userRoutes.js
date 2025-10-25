@@ -100,7 +100,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid ,getMe, deleteUser, updateUserProfile, updateUserReputation, updateUserBalance, getAllUsers} = require('../controllers/userController');
+const { signup, login, searchUserByUuid, getMe, deleteUser, deleteMyAccount, updateUserProfile, updateUserReputation, updateUserBalance, getAllUsers } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -264,8 +264,23 @@ router.get('/search/:uuid', authMiddleware, adminMiddleware, searchUserByUuid);
  *         description: User not found
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Delete current user account
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
  */
 router.get('/me', authMiddleware, getMe);
+router.delete('/me', authMiddleware, deleteMyAccount);
 
 /**
  * @swagger

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createComment, getComments, updateComment, deleteComment } = require('../controllers/commentController');
+const { createComment, getComments, updateComment, deleteComment, deleteCommentsForAuction } = require('../controllers/commentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -122,9 +122,26 @@ const adminMiddleware = require('../middleware/adminMiddleware');
  *         description: Auction item not found
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Delete all comments for an auction item (Seller or Admin)
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Comments deleted successfully
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       403:
+ *         description: Forbidden, not the seller or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
  */
 router.post('/auctions/:auctionItemId/comments', authMiddleware, createComment);
 router.get('/auctions/:auctionItemId/comments', getComments);
+router.delete('/auctions/:auctionItemId/comments', authMiddleware, deleteCommentsForAuction);
 
 /**
  * @swagger

@@ -158,6 +158,25 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Delete currently authenticated user's account
+// @route   DELETE /api/users/me
+// @access  Private
+const deleteMyAccount = async (req, res) => {
+  try {
+    const userUuid = req.user.uuid;
+    const result = await deleteUserByUuid(userUuid);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json({ message: 'Your account has been deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting current user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
@@ -286,6 +305,7 @@ module.exports = {
   searchUserByUuid,
   getMe,
   deleteUser,
+  deleteMyAccount,
   updateUserProfile,
   updateUserReputation,
   updateUserBalance,

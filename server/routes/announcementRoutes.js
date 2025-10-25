@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAnnouncement, getAnnouncements, getBannerAnnouncement, updateAnnouncement, deleteAnnouncement, toggleBannerStatus } = require('../controllers/announcementController');
+const { createAnnouncement, getAnnouncements, getBannerAnnouncement, updateAnnouncement, deleteAnnouncement, toggleBannerStatus, deleteAllAnnouncements, clearBannerAnnouncement } = require('../controllers/announcementController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -107,9 +107,24 @@ const adminMiddleware = require('../middleware/adminMiddleware');
  *                 $ref: '#/components/schemas/Announcement'
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Delete all announcements (Admin only)
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All announcements deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       500:
+ *         description: Server error
  */
 router.post('/', authMiddleware, adminMiddleware, createAnnouncement);
 router.get('/', getAnnouncements);
+router.delete('/', authMiddleware, adminMiddleware, deleteAllAnnouncements);
 
 /**
  * @swagger
@@ -128,8 +143,25 @@ router.get('/', getAnnouncements);
  *         description: No banner announcement found
  *       500:
  *         description: Server error
+ *   delete:
+ *     summary: Clear the current banner announcement (Admin only)
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Banner announcement cleared successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       404:
+ *         description: No banner announcement found
+ *       500:
+ *         description: Server error
  */
 router.get('/banner', getBannerAnnouncement);
+router.delete('/banner', authMiddleware, adminMiddleware, clearBannerAnnouncement);
 
 /**
  * @swagger

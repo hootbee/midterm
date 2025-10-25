@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOrCreateDMRoom, getDMRooms, getDMMessages,leaveDMRoom } = require('../controllers/dmController');
+const { getOrCreateDMRoom, getDMRooms, getDMMessages, leaveDMRoom, deleteDMRoom } = require('../controllers/dmController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -181,5 +181,34 @@ router.get('/room/:roomId/messages', authMiddleware, getDMMessages);
  *         description: Server error
  */
 router.delete('/room/:roomId/leave', authMiddleware, leaveDMRoom);
+
+/**
+ * @swagger
+ * /api/dm/room/{roomId}:
+ *   delete:
+ *     summary: Permanently delete a DM room and its messages
+ *     tags: [Direct Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the DM room to delete
+ *     responses:
+ *       200:
+ *         description: DM room deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized to delete this DM room
+ *       404:
+ *         description: DM room not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/room/:roomId', authMiddleware, deleteDMRoom);
 
 module.exports = router;

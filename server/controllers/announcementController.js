@@ -131,6 +131,43 @@ const toggleBannerStatus = async (req, res) => {
   }
 };
 
+// @desc    Delete all announcements
+// @route   DELETE /api/announcements
+// @access  Private/Admin
+const deleteAllAnnouncements = async (req, res) => {
+  try {
+    const result = await Announcement.deleteMany({});
+    res.status(200).json({
+      message: 'All announcements deleted successfully.',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Error deleting all announcements:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Clear the announcement currently set as banner
+// @route   DELETE /api/announcements/banner
+// @access  Private/Admin
+const clearBannerAnnouncement = async (req, res) => {
+  try {
+    const bannerAnnouncement = await Announcement.findOne({ isBanner: true });
+
+    if (!bannerAnnouncement) {
+      return res.status(404).json({ message: 'No banner announcement to clear.' });
+    }
+
+    bannerAnnouncement.isBanner = false;
+    await bannerAnnouncement.save();
+
+    res.status(200).json({ message: 'Banner announcement cleared successfully.' });
+  } catch (error) {
+    console.error('Error clearing banner announcement:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAnnouncement,
   getAnnouncements,
@@ -138,4 +175,6 @@ module.exports = {
   updateAnnouncement,
   deleteAnnouncement,
   toggleBannerStatus,
+  deleteAllAnnouncements,
+  clearBannerAnnouncement,
 };
