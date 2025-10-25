@@ -56,6 +56,20 @@ const auctionItemSchema = new mongoose.Schema({
       timestamp: { type: Date, default: Date.now },
     },
   ],
+  status: {
+    type: String,
+    enum: ['active', 'ended', 'sold', 'cancelled'],
+    default: 'active',
+  },
+  winnerUuid: {
+    type: String,
+    default: null,
+  },
+  transactionStatus: {
+    type: String,
+    enum: ['none', 'pending_payment', 'paid', 'completed'],
+    default: 'none',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

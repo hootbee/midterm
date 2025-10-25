@@ -1,8 +1,37 @@
 const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById, resetReportCountById } = require('../models/auctionItemModel');
 const { Report } = require('../models/reportModel');
 const { findUserByEmail } = require('../models/userModel');
+const { sendSystemDM } = require('./dmController'); // Import sendSystemDM
 fs = require('fs');
 const path = require('path');
+
+// Function to process ended auctions
+const processEndedAuctions = async () => {
+  try {
+    const now = new Date();
+    const endedAuctions = await AuctionItem.find({ endTime: { $lte: now }, status: 'active' });
+
+    for (const item of endedAuctions) {
+      item.status = 'ended';
+      if (item.highestBidderUuid) {
+        item.winnerUuid = item.highestBidderUuid;
+        item.transactionStatus = 'pending_payment';
+
+        // Send DM to winner
+        await sendSystemDM(item.winnerUuid, `축하합니다! \'${item.title}\' 경매에 낙찰되셨습니다. 판매자와 연락하여 거래를 진행해주세요.`);
+        // Send DM to seller
+        await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매가 종료되었습니다. 낙찰자(${item.winnerUuid.substring(0, 8)}...)와 연락하여 거래를 진행해주세요.`);
+      } else {
+        // No bids, auction ended without a winner
+        await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매가 입찰자 없이 종료되었습니다.`);
+      }
+      await item.save();
+      console.log(`Auction ${item._id} ended and processed.`);
+    }
+  } catch (error) {
+    console.error('Error processing ended auctions:', error);
+  }
+};
 
 // @desc    Create a new auction item
 // @route   POST /api/auctions
@@ -116,8 +145,7 @@ const downloadItemFile = async (req, res) => {
     }
 
     // 4. Send the file for download
-    const path = require('path');
-    const filePath = path.resolve(item.filePath);
+    const filePath = path.resolve(__dirname, '..', item.filePath);
     
     res.download(filePath, (err) => {
       if (err) {
@@ -149,8 +177,8 @@ const deleteAuctionItem = async (req, res) => {
     }
 
     // Delete the files from the filesystem
-    const imagePath = path.resolve(item.imagePath);
-    const filePath = path.resolve(item.filePath);
+    const imagePath = path.resolve(__dirname, '..', item.imagePath);
+    const filePath = path.resolve(__dirname, '..', item.filePath);
 
     fs.unlink(imagePath, (err) => {
       if (err) console.error('Error deleting image file:', err);
@@ -202,6 +230,133 @@ const updateAuctionItem = async (req, res) => {
   }
 };
 
+// @desc    Mark auction as paid
+// @route   PUT /api/auctions/:id/mark-paid
+// @access  Private (Winner or Admin)
+const markPaid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const item = await findById(id);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    if (item.status !== 'ended') {
+      return res.status(400).json({ message: 'Auction has not ended yet.' });
+    }
+
+    if (item.winnerUuid !== currentUserUuid && !isAdmin) {
+      return res.status(403).json({ message: 'Only the winner or admin can mark this as paid.' });
+    }
+
+    if (item.transactionStatus === 'paid') {
+      return res.status(400).json({ message: 'Item already marked as paid.' });
+    }
+
+    item.transactionStatus = 'paid';
+    const updatedItem = await item.save();
+
+    // Notify seller that payment has been made
+    await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매의 낙찰자(${item.winnerUuid.substring(0, 8)}...)가 결제를 완료했습니다.`);
+
+    res.status(200).json(updatedItem);
+  } catch (error) {
+    console.error('Error marking auction as paid:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Mark auction as completed
+// @route   PUT /api/auctions/:id/mark-completed
+// @access  Private (Winner or Admin)
+const markCompleted = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const item = await findById(id);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    if (item.status !== 'ended') {
+      return res.status(400).json({ message: 'Auction has not ended yet.' });
+    }
+
+    if (item.winnerUuid !== currentUserUuid && !isAdmin) {
+      return res.status(403).json({ message: 'Only the winner or admin can mark this as completed.' });
+    }
+
+    if (item.transactionStatus !== 'paid') {
+      return res.status(400).json({ message: 'Item has not been paid yet.' });
+    }
+
+    if (item.transactionStatus === 'completed') {
+      return res.status(400).json({ message: 'Item already marked as completed.' });
+    }
+
+    item.transactionStatus = 'completed';
+    item.status = 'sold'; // Auction is fully sold
+    const updatedItem = await item.save();
+
+    // Notify seller that transaction is completed
+    await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매 거래가 완료되었습니다. 수고하셨습니다.`);
+
+    res.status(200).json(updatedItem);
+  } catch (error) {
+    console.error('Error marking auction as completed:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Cancel an auction
+// @route   POST /api/auctions/:id/cancel
+// @access  Private (Seller or Admin)
+const cancelAuction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const item = await findById(id);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found' });
+    }
+
+    if (item.sellerUuid !== currentUserUuid && !isAdmin) {
+      return res.status(403).json({ message: 'Only the seller or admin can cancel this auction.' });
+    }
+
+    if (item.status !== 'active') {
+      return res.status(400).json({ message: 'Only active auctions can be cancelled.' });
+    }
+
+    // Optionally, refund bids if any
+    // For now, just change status
+    item.status = 'cancelled';
+    const updatedItem = await item.save();
+
+    // Notify bidders if any
+    if (item.bids && item.bids.length > 0) {
+      const uniqueBidders = [...new Set(item.bids.map(bid => bid.bidderUuid))];
+      for (const bidderUuid of uniqueBidders) {
+        await sendSystemDM(bidderUuid, `\'${item.title}\' 경매가 취소되었습니다.`);
+      }
+    }
+
+    res.status(200).json(updatedItem);
+  } catch (error) {
+    console.error('Error cancelling auction:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 // ... (other controller functions)
 
@@ -290,6 +445,20 @@ const getBidAuctions = async (req, res) => {
   }
 };
 
+// @desc    Get all auction items the current user is selling
+// @route   GET /api/auctions/selling/me
+// @access  Private
+const getSellingAuctions = async (req, res) => {
+  try {
+    const sellerUuid = req.user.uuid; // from authMiddleware
+    const items = await AuctionItem.find({ sellerUuid }).sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
@@ -301,4 +470,9 @@ module.exports = {
   getReportedItems,
   resetReportsForItem,
   getBidAuctions,
+  getSellingAuctions, // Export the new function
+  processEndedAuctions, // Export for scheduler
+  markPaid,
+  markCompleted,
+  cancelAuction,
 };

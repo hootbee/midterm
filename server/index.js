@@ -11,8 +11,11 @@ const auctionRoutes = require('./routes/auctionRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const dmRoutes = require('./routes/dmRoutes');
+const { setIoInstance } = require('./controllers/dmController'); // Import setIoInstance
 const announcementRoutes = require('./routes/announcementRoutes');
 const favoriteAuctionRoutes = require('./routes/favoriteAuctionRoutes');
+const cron = require('node-cron'); // Import node-cron
+const { processEndedAuctions } = require('./controllers/auctionController'); // Import processEndedAuctions
 
 // --- Swagger Setup ---
 const swaggerUi = require('swagger-ui-express');
@@ -72,6 +75,7 @@ const io = new Server(httpServer, {
 
 // Initialize Socket.IO logic
 initializeSocket(io);
+setIoInstance(io); // Pass the io instance to the DM controller
 
 // Middleware
 app.use(express.json());
@@ -134,6 +138,13 @@ const startServer = async () => {
       await createAdminUserIfNeeded();
       await connectMongo(); // For MongoDB
       console.log("✅ MongoDB connected successfully.");
+
+      // Schedule cron job to process ended auctions every minute
+      cron.schedule('* * * * *', () => {
+        console.log('Running cron job: processing ended auctions...');
+        processEndedAuctions();
+      });
+      console.log("✅ Cron job scheduled for processing ended auctions.");
 
       httpServer.listen(port, () => {
         console.log(`✅ Backend server with Socket.IO listening at http://localhost:${port}`);

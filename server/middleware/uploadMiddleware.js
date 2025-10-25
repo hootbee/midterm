@@ -52,9 +52,6 @@ const upload = multer({
       cb(errorMsg);
     }
   }
-}).fields([
-  { name: 'photo', maxCount: 1 },
-  { name: 'itemFile', maxCount: 1 }
-]);
+});
 
 module.exports = upload;

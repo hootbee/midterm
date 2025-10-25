@@ -143,7 +143,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
@@ -224,6 +224,7 @@ const adminMiddleware = require('../middleware/adminMiddleware');
  *         description: Server error
  */
 router.get('/', getAuctionItems);
+router.post('/', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'itemFile', maxCount: 1 }]), createAuctionItem);
 
 /**
  * @swagger
@@ -466,5 +467,135 @@ router.put('/:id/reset-reports', authMiddleware, adminMiddleware, resetReportsFo
  *         description: Server error
  */
 router.get('/bids/me', authMiddleware, getBidAuctions);
+
+/**
+ * @swagger
+ * /api/auctions/selling/me:
+ *   get:
+ *     summary: Get all auction items the current user is selling
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of auction items the user is selling
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/AuctionItem'
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       500:
+ *         description: Server error
+ */
+router.get('/selling/me', authMiddleware, getSellingAuctions);
+
+/**
+ * @swagger
+ * /api/auctions/{id}/mark-paid:
+ *   put:
+ *     summary: Mark an auction item as paid (Winner or Admin)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to mark as paid
+ *     responses:
+ *       200:
+ *         description: Auction item marked as paid successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuctionItem'
+ *       400:
+ *         description: Invalid status or already paid
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the winner or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id/mark-paid', authMiddleware, markPaid);
+
+
+/**
+ * @swagger
+ * /api/auctions/{id}/mark-completed:
+ *   put:
+ *     summary: Mark an auction item as completed (Winner or Admin)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to mark as completed
+ *     responses:
+ *       200:
+ *         description: Auction item marked as completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuctionItem'
+ *       400:
+ *         description: Invalid status or not yet delivered
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the winner or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id/mark-completed', authMiddleware, markCompleted);
+
+/**
+ * @swagger
+ * /api/auctions/{id}/cancel:
+ *   post:
+ *     summary: Cancel an active auction (Seller or Admin)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to cancel
+ *     responses:
+ *       200:
+ *         description: Auction item cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuctionItem'
+ *       400:
+ *         description: Invalid status (only active auctions can be cancelled)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the seller or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/:id/cancel', authMiddleware, cancelAuction);
 
 module.exports = router;

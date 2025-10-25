@@ -11,6 +11,7 @@ import LoggedInRoute from './LoggedInRoute';
 import Profile from './Profile';
 import CreateAuctionItem from './CreateAuctionItem';
 import MyBids from './MyBids';
+import MySelling from './MySelling'; // Import MySelling component
 import DMPage from './DMPage';
 import AnnouncementAdminPage from './AnnouncementAdminPage';
 import AnnouncementPage from './AnnouncementPage';
@@ -90,6 +91,7 @@ function App() {
           <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
           <Route path="/profile" element={<LoggedInRoute><Profile /></LoggedInRoute>} />
           <Route path="/my-bids" element={<LoggedInRoute><MyBids /></LoggedInRoute>} />
+          <Route path="/my-selling" element={<LoggedInRoute><MySelling /></LoggedInRoute>} /> {/* New route for MySelling */}
           <Route path="/dm" element={<LoggedInRoute><DMPage /></LoggedInRoute>} />
           <Route path="/announcements" element={<AnnouncementPage />} />
           <Route path="/admin/announcements" element={<PrivateRoute><AnnouncementAdminPage /></PrivateRoute>} />

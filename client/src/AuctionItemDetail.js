@@ -262,6 +262,70 @@ function AuctionItemDetail() {
     }
   };
 
+  const handleUpdateTransactionStatus = async (statusType) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!window.confirm(`정말로 ${statusType} 처리하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auctions/${id}/mark-${statusType}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const updatedItem = await res.json();
+        setItem(updatedItem);
+        alert(`${statusType} 처리되었습니다.`);
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || `${statusType} 처리 실패`);
+      }
+    } catch (err) {
+      alert(`${statusType} 처리 오류: ${err.message}`);
+    }
+  };
+
+  const handleCancelAuction = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!window.confirm('정말로 경매를 취소하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auctions/${id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const updatedItem = await res.json();
+        setItem(updatedItem);
+        alert('경매가 취소되었습니다.');
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '경매 취소 실패');
+      }
+    } catch (err) {
+      alert(`경매 취소 오류: ${err.message}`);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!item) return <div>Item not found.</div>;
@@ -279,8 +343,17 @@ function AuctionItemDetail() {
 
   const isSeller = item.sellerUuid === currentUserUuid;
   const isAuctionOver = new Date() > new Date(item.endTime);
-  const isWinner = isAuctionOver && item.highestBidderUuid === currentUserUuid;
-  const canBid = token && !isSeller && !isAuctionOver;
+  const isWinner = item.winnerUuid === currentUserUuid; // Use item.winnerUuid
+  const canBid = token && item.status === 'active' && !isSeller && !isAuctionOver; // Only if active
+
+  let transactionStatusText = '-';
+  switch (item.transactionStatus) {
+    case 'none': transactionStatusText = '거래 전'; break;
+    case 'pending_payment': transactionStatusText = '결제 대기 중'; break;
+    case 'paid': transactionStatusText = '결제 완료'; break;
+    case 'completed': transactionStatusText = '거래 완료'; break;
+    default: break;
+  }
 
   if (isEditMode) {
     return <EditForm item={item} onUpdate={handleUpdate} onCancel={() => setIsEditMode(false)} />;
@@ -299,12 +372,34 @@ function AuctionItemDetail() {
       <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
       <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
       <p><strong>마감 시간:</strong> {new Date(item.endTime).toLocaleString()}</p>
+      <p><strong>경매 상태:</strong> {item.status === 'active' ? '진행 중' : item.status === 'ended' ? '마감됨' : item.status === 'sold' ? '판매됨' : '취소됨'}</p>
+      {item.status !== 'active' && item.winnerUuid && <p><strong>낙찰자 UUID:</strong> {item.winnerUuid}</p>}
+      {item.status !== 'active' && item.winnerUuid && <p><strong>거래 상태:</strong> {transactionStatusText}</p>}
       {token && (
         <button onClick={handleToggleFavorite} style={{ marginTop: '10px', backgroundColor: isFavorited ? '#ffc107' : '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
           {isFavorited ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
         </button>
       )}
-      {isSeller && !isAuctionOver && (
+
+      {/* Transaction Management Buttons */}
+      {item.status === 'ended' && item.winnerUuid && item.transactionStatus !== 'completed' && (
+        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+          {isWinner && item.transactionStatus === 'pending_payment' && (
+            <button onClick={() => handleUpdateTransactionStatus('paid')} style={{ marginRight: '10px' }}>결제 완료</button>
+          )}
+          {isWinner && item.transactionStatus === 'paid' && (
+            <button onClick={() => handleUpdateTransactionStatus('completed')} style={{ marginRight: '10px' }}>거래 완료</button>
+          )}
+        </div>
+      )}
+
+      {/* Cancel Auction Button */}
+      {isSeller && item.status === 'active' && (
+        <button onClick={handleCancelAuction} style={{ marginTop: '10px', backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
+          경매 취소
+        </button>
+      )}
+      {isSeller && item.status === 'active' && !isAuctionOver && (
         <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
             <label>마감 시간 수정: </label>
             <input
@@ -317,7 +412,7 @@ function AuctionItemDetail() {
       )}
       <p><strong>등록일:</strong> {new Date(item.createdAt).toLocaleString()}</p>
 
-      {isWinner && (
+      {isWinner && item.transactionStatus === 'completed' && (
         <div style={biddingCardStyle}>
           <h4>경매 종료! 최종 낙찰자입니다.</h4>
           <button onClick={handleDownload}>족보 다운로드</button>
@@ -353,7 +448,7 @@ function AuctionItemDetail() {
       {showReportForm && <ReportForm itemId={item._id} onCancel={() => setShowReportForm(false)} />}
 
       {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
-      {isAuctionOver && !isWinner && <p>경매가 종료되었습니다.</p>}
+      {item.status !== 'active' && !isWinner && <p>경매가 종료되거나 취소되었습니다.</p>}
 
       <div>
         <h4>입찰 내역</h4>

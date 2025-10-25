@@ -124,9 +124,52 @@ const leaveDMRoom = async (req, res) => {
   }
 };
 
+// Helper function to send system-generated DMs
+const SYSTEM_UUID = 'system-notification-uuid'; // A unique UUID for the system sender
+let ioInstance; // To hold the Socket.IO instance
+
+const setIoInstance = (io) => {
+  ioInstance = io;
+};
+
+const sendSystemDM = async (receiverUuid, content) => {
+  try {
+    const participants = getSortedParticipants(SYSTEM_UUID, receiverUuid);
+
+    let dmRoom = await DMRoom.findOne({ participants: { $all: participants } });
+
+    if (!dmRoom) {
+      dmRoom = new DMRoom({ participants });
+      await dmRoom.save();
+    }
+
+    const newMessage = new DMMessage({
+      roomId: dmRoom._id,
+      senderUuid: SYSTEM_UUID,
+      receiverUuid,
+      content,
+    });
+    await newMessage.save();
+
+    dmRoom.lastMessage = newMessage._id;
+    dmRoom.updatedAt = new Date();
+    await dmRoom.save();
+
+    // Emit message via Socket.IO if instance is available
+    if (ioInstance) {
+      ioInstance.to(dmRoom._id.toString()).emit('dm:message', newMessage);
+    }
+    console.log(`System DM sent to ${receiverUuid} in room ${dmRoom._id}: ${content}`);
+  } catch (error) {
+    console.error('Error sending system DM:', error);
+  }
+};
+
 module.exports = {
   getOrCreateDMRoom,
   getDMRooms,
   getDMMessages,
   leaveDMRoom,
+  sendSystemDM,
+  setIoInstance, // Export setIoInstance to allow setting the io instance from index.js
 };
