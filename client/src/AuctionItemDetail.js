@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
 
 const detailContainerStyle = {
+  position: 'relative',
   padding: '20px',
   maxWidth: '800px',
   margin: 'auto',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 const itemCardStyle = {
+  position: 'relative',
   border: '1px solid #ccc',
   borderRadius: '8px',
   padding: '16px',
@@ -182,70 +183,129 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
   };
 
   return (
-    <div>
-      <h2>경매장</h2>
-      <Link to="/create-auction">
-        <button style={{ marginBottom: '20px' }}>작성하기</button>
-      </Link>
-      {isAdmin && (
-        <button onClick={toggleSelectionMode} style={{ marginBottom: '20px', marginLeft: '10px' }}>
-          {isSelectionMode ? '선택 모드 종료' : '삭제하기'}
-        </button>
-      )}
+      <div>
+        <h2>경매장</h2>
+        <Link to="/create-auction">
+          <button style={{marginBottom: '20px'}}>작성하기</button>
+        </Link>
+        {isAdmin && (
+            <button onClick={toggleSelectionMode} style={{marginBottom: '20px', marginLeft: '10px'}}>
+              {isSelectionMode ? '선택 모드 종료' : '삭제하기'}
+            </button>
+        )}
 
-      {isSelectionMode && (
-        <div style={{ marginBottom: '20px', marginLeft: '10px' }}>
-          <button onClick={handleSelectAll} style={{ marginRight: '10px' }}>
-            {selectedItems.length === items.length ? '전체 선택 해제' : '전체 선택하기'}
-          </button>
-          <button onClick={handleBatchDelete} disabled={selectedItems.length === 0} style={{ backgroundColor: 'red', color: 'white' }}>
-            선택된 아이템 삭제 ({selectedItems.length})
-          </button>
-        </div>
-      )}
-
-      <div style={containerStyle}>
-        {items.map(item => (
-          <div key={item._id} style={{...itemCardStyle, border: item.isFavorited ? '2px solid yellow' : (item.sellerReputationScore >= 100 ? '2px solid red' : itemCardStyle.border)}}>
-            {isSelectionMode && (
-              <input
-                type="checkbox"
-                checked={selectedItems.includes(item._id)}
-                onChange={() => handleSelectItem(item._id)}
-                style={{ marginRight: '10px', transform: 'scale(1.5)' }}
-              />
-            )}
-            {item.sellerReputationScore >= 100 && <div style={{position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'red', color: 'white', padding: '2px 5px', borderRadius: '3px', fontSize: '0.8em'}}>신용</div>}
-            <Link to={`/auction/${item._id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1, display: 'flex', gap: '16px' }}>
-              <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle} />
-              <div>
-                <h3>{item.title}</h3>
-                <p>판매자 평판: {item.sellerReputationScore}점</p>
-                <p>판매자 UUID: {item.sellerUuid}</p>
-                <p>경매 시작가: {item.startPrice.toLocaleString()}원</p>
-                <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
-              </div>
-            </Link>
-            {!isSelectionMode && (isLoggedIn && (isAdmin || userUuid === item.sellerUuid)) && (
-              <button onClick={() => handleDeleteItem(item._id)} style={{ backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', alignSelf: 'flex-start' }}>
-                삭제하기
+        {isSelectionMode && (
+            <div style={{marginBottom: '20px', marginLeft: '10px'}}>
+              <button onClick={handleSelectAll} style={{marginRight: '10px'}}>
+                {selectedItems.length === items.length ? '전체 선택 해제' : '전체 선택하기'}
               </button>
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
-          이전
-        </button>
-        <span style={{ margin: '0 10px' }}>
+              <button onClick={handleBatchDelete} disabled={selectedItems.length === 0}
+                      style={{backgroundColor: 'red', color: 'white'}}>
+                선택된 아이템 삭제 ({selectedItems.length})
+              </button>
+            </div>
+        )}
+
+        <div style={containerStyle}>
+          {items.map(item => (
+              <div
+                  key={item._id}
+                  style={{
+                    ...itemCardStyle,
+                    border: '1px solid #ccc', // 기본 테두리
+                    position: 'relative'
+                  }}
+              >
+                {isSelectionMode && (
+                    <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item._id)}
+                        onChange={() => handleSelectItem(item._id)}
+                        style={{marginRight: '10px', transform: 'scale(1.5)'}}
+                    />
+                )}
+
+                {/* 좌측 하단 표시 영역 */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  left: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  {/* 신용 판매자 배지 */}
+                  {item.sellerReputationScore >= 100 && (
+                      <div style={{
+                        backgroundColor: 'red',
+                        color: 'white',
+                        padding: '2px 5px',
+                        borderRadius: '3px',
+                        fontSize: '0.8em'
+                      }}>
+                        신용
+                      </div>
+                  )}
+
+                  {/* 즐겨찾기 별 표시 */}
+                  {item.isFavorited && (
+                      <div style={{
+                        color: 'gold',
+                        fontSize: '1.2em',
+                        textShadow: '0 0 3px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        ★
+                      </div>
+                  )}
+                </div>
+
+                <Link
+                    to={`/auction/${item._id}`}
+                    style={{textDecoration: 'none', color: 'inherit', flexGrow: 1, display: 'flex', gap: '16px'}}
+                >
+                  <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle}/>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>판매자 평판: {item.sellerReputationScore}점</p>
+                    <p>판매자 UUID: {item.sellerUuid}</p>
+                    <p>경매 시작가: {item.startPrice.toLocaleString()}원</p>
+                    <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
+                  </div>
+                </Link>
+
+                {!isSelectionMode && (isLoggedIn && (isAdmin || userUuid === item.sellerUuid)) && (
+                    <button
+                        onClick={() => handleDeleteItem(item._id)}
+                        style={{
+                          backgroundColor: 'red',
+                          color: 'white',
+                          border: 'none',
+                          padding: '5px 10px',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          alignSelf: 'flex-start'
+                        }}
+                    >
+                      삭제하기
+                    </button>
+                )}
+              </div>
+          ))}
+        </div>
+        <div style={{textAlign: 'center', marginTop: '20px'}}>
+          <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+            이전
+          </button>
+          <span style={{margin: '0 10px'}}>
           Page {currentPage} of {totalPages}
         </span>
-        <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-          다음
-        </button>
+          <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+            다음
+          </button>
+        </div>
       </div>
-    </div>
   );
 };
 
@@ -260,8 +320,8 @@ function Home() {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
 
       return JSON.parse(jsonPayload);
@@ -313,20 +373,20 @@ function Home() {
   };
 
   return (
-    <div>
-      {showAnnouncementBanner && bannerAnnouncement && (
-        <div style={{
-          backgroundColor: '#fff3cd',
-          color: '#856404',
-          padding: '10px',
-          marginBottom: '20px',
-          border: '1px solid #ffeeba',
-          borderRadius: '5px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <span>✨ {bannerAnnouncement.title}</span>
+      <div>
+        {showAnnouncementBanner && bannerAnnouncement && (
+            <div style={{
+              backgroundColor: '#fff3cd',
+              color: '#856404',
+              padding: '10px',
+              marginBottom: '20px',
+              border: '1px solid #ffeeba',
+              borderRadius: '5px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span>✨ {bannerAnnouncement.title}</span>
           <button
             onClick={() => setShowAnnouncementBanner(false)}
             style={{
