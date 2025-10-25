@@ -360,7 +360,8 @@ function AuctionItemDetail() {
   }
 
   return (
-    <div style={detailContainerStyle}>
+    <div style={{...detailContainerStyle, border: item.sellerReputationScore >= 100 ? '2px solid red' : detailContainerStyle.border}}>
+      {item.sellerReputationScore >= 100 && <div style={{position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'red', color: 'white', padding: '2px 5px', borderRadius: '3px', fontSize: '0.8em'}}>신용</div>}
       <h2>{item.title}</h2>
       <img src={`/${item.imagePath}`} alt={item.title} style={imageStyle} />
 

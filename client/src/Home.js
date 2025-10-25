@@ -206,7 +206,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
 
       <div style={containerStyle}>
         {items.map(item => (
-          <div key={item._id} style={{...itemCardStyle, border: item.isFavorited ? '2px solid yellow' : itemCardStyle.border}}>
+          <div key={item._id} style={{...itemCardStyle, border: item.isFavorited ? '2px solid yellow' : (item.sellerReputationScore >= 100 ? '2px solid red' : itemCardStyle.border)}}>
             {isSelectionMode && (
               <input
                 type="checkbox"
@@ -215,6 +215,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                 style={{ marginRight: '10px', transform: 'scale(1.5)' }}
               />
             )}
+            {item.sellerReputationScore >= 100 && <div style={{position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'red', color: 'white', padding: '2px 5px', borderRadius: '3px', fontSize: '0.8em'}}>신용</div>}
             <Link to={`/auction/${item._id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1, display: 'flex', gap: '16px' }}>
               <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle} />
               <div>

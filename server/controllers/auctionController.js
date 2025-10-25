@@ -1,6 +1,6 @@
 const { AuctionItem, findAllAuctionItems, findById, deleteById, updateById, resetReportCountById } = require('../models/auctionItemModel');
 const { Report } = require('../models/reportModel');
-const { findUserByEmail } = require('../models/userModel');
+const { findUserByEmail, findUserByUuid, updateReputationByUuid, findUsersByUuids } = require('../models/userModel');
 const { sendSystemDM } = require('./dmController'); // Import sendSystemDM
 fs = require('fs');
 const path = require('path');
@@ -106,8 +106,16 @@ const getAuctionItems = async (req, res) => {
 
     const { items, totalItems } = await findAllAuctionItems({ page, limit, search, type });
 
+    const sellerUuids = [...new Set(items.map(item => item.sellerUuid))];
+    const sellers = await findUsersByUuids(sellerUuids);
+    const sellerReputationMap = sellers.reduce((acc, seller) => {
+      acc[seller.uuid] = seller.reputation_score;
+      return acc;
+    }, {});
+
     const itemsWithFavorites = items.map(item => ({
       ...item.toObject(),
+      sellerReputationScore: sellerReputationMap[item.sellerUuid] || item.sellerReputationScore,
       isFavorited: favoriteAuctionIds.includes(item._id.toString()),
     }));
 
@@ -132,6 +140,10 @@ const getAuctionItemById = async (req, res) => {
   try {
     const item = await findById(req.params.id);
     if (item) {
+      const seller = await findUserByUuid(item.sellerUuid);
+      if (seller) {
+        item.sellerReputationScore = seller.reputation_score;
+      }
       res.json(item);
     } else {
       res.status(404).json({ message: 'Auction item not found' });
@@ -328,6 +340,13 @@ const markCompleted = async (req, res) => {
     item.transactionStatus = 'completed';
     item.status = 'sold'; // Auction is fully sold
     const updatedItem = await item.save();
+
+    // Update seller's reputation
+    const seller = await findUserByUuid(item.sellerUuid);
+    if (seller) {
+      const newReputation = seller.reputation_score + 50;
+      await updateReputationByUuid(item.sellerUuid, newReputation);
+    }
 
     // Notify seller that transaction is completed
     await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매 거래가 완료되었습니다. 수고하셨습니다.`);

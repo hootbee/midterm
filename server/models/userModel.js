@@ -253,6 +253,18 @@ const findAllUsers = async ({ page, limit }) => {
   }
 };
 
+const findUsersByUuids = async (uuids) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = `SELECT uuid, reputation_score FROM users WHERE uuid IN (${uuids.map(() => '?').join(',')})`;
+    const rows = await conn.query(query, uuids);
+    return rows;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   initializeMariaDB,
   findUserByEmailOrStudentId,
@@ -268,4 +280,5 @@ module.exports = {
   updatePasswordByUuid,
   updateAdminStatusByUuid,
   findAllUsers,
+  findUsersByUuids,
 };
