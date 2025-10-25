@@ -9,21 +9,6 @@ const MySelling = () => {
   const [error, setError] = useState(null);
   const [currentUserUuid, setCurrentUserUuid] = useState(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        setCurrentUserUuid(decodedToken.uuid);
-      } catch (e) {
-        console.error("Invalid token");
-        setCurrentUserUuid(null);
-      }
-    }
-
-    fetchMySellingItems();
-  }, []);
-
   const fetchMySellingItems = async () => {
     try {
       setLoading(true);
@@ -48,6 +33,62 @@ const MySelling = () => {
     }
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        setCurrentUserUuid(decodedToken.uuid);
+      } catch (e) {
+        console.error("Invalid token");
+        setCurrentUserUuid(null);
+      }
+    }
+
+    fetchMySellingItems();
+  }, []);
+
+  const handleClearHistory = async () => {
+    if (!window.confirm('정말로 모든 판매 내역을 숨기시겠습니까? 진행 중인 경매는 제외됩니다.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    const auctionIdsToHide = items
+      .filter(item => item.status !== 'active')
+      .map(item => item._id);
+
+    if (auctionIdsToHide.length === 0) {
+      alert('숨길 판매 내역이 없습니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auctions/hide-for-seller', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ auctionIds: auctionIdsToHide }),
+      });
+
+      if (res.ok) {
+        alert('판매 내역이 성공적으로 숨김 처리되었습니다.');
+        fetchMySellingItems(); // Refresh the list
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || '내역 숨김에 실패했습니다.');
+      }
+    } catch (err) {
+      alert(`오류: ${err.message}`);
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -57,9 +98,16 @@ const MySelling = () => {
     return <div>Error: {error}</div>;
   }
 
+  const nonActiveItems = items.filter(item => item.status !== 'active');
+
   return (
     <div className="container">
       <h1>My Selling Items</h1>
+      {nonActiveItems.length > 0 && (
+        <button onClick={handleClearHistory} style={{ marginBottom: '20px', backgroundColor: '#dc3545', color: 'white' }}>
+          모든 내역 삭제
+        </button>
+      )}
       {items.length === 0 ? (
         <p>You are not selling any items or no items have ended yet.</p>
       ) : (

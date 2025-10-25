@@ -69,6 +69,10 @@ const auctionItemSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  hidden_for_seller: {
+    type: Boolean,
+    default: false,
+  },
   transactionStatus: {
     type: String,
     enum: ['none', 'pending_payment', 'paid', 'completed'],

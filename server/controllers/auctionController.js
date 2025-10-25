@@ -484,8 +484,32 @@ const hideAuctionsForBidder = async (req, res) => {
 const getSellingAuctions = async (req, res) => {
   try {
     const sellerUuid = req.user.uuid; // from authMiddleware
-    const items = await AuctionItem.find({ sellerUuid }).sort({ createdAt: -1 });
+    const items = await AuctionItem.find({ 
+      sellerUuid, 
+      hidden_for_seller: { $ne: true } 
+    }).sort({ createdAt: -1 });
     res.json(items);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+const hideAuctionsForSeller = async (req, res) => {
+  try {
+    const sellerUuid = req.user.uuid;
+    const { auctionIds } = req.body;
+
+    if (!Array.isArray(auctionIds)) {
+      return res.status(400).json({ message: 'auctionIds must be an array.' });
+    }
+
+    await AuctionItem.updateMany(
+      { _id: { $in: auctionIds }, sellerUuid, status: { $ne: 'active' } },
+      { $set: { hidden_for_seller: true } }
+    );
+
+    res.json({ message: 'Selected auctions have been hidden from your selling history.' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -509,4 +533,5 @@ module.exports = {
   markCompleted,
   cancelAuction,
   hideAuctionsForBidder,
+  hideAuctionsForSeller,
 };
