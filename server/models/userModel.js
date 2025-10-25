@@ -198,6 +198,42 @@ const updateBalanceByUuid = async (uuid, newBalance) => {
   }
 };
 
+const findUserWithPasswordByUuid = async (uuid) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'SELECT * FROM users WHERE uuid = ?';
+    const rows = await conn.query(query, [uuid]);
+    return rows[0];
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+const updatePasswordByUuid = async (uuid, hashedPassword) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'UPDATE users SET password = ? WHERE uuid = ?';
+    const result = await conn.query(query, [hashedPassword, uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+const updateAdminStatusByUuid = async (uuid, isAdmin) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = 'UPDATE users SET admin = ? WHERE uuid = ?';
+    const result = await conn.query(query, [isAdmin, uuid]);
+    return result;
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 
 const findAllUsers = async ({ page, limit }) => {
   let conn;
@@ -228,5 +264,8 @@ module.exports = {
   updateUserByUuid,
   updateReputationByUuid,
   updateBalanceByUuid,
+  findUserWithPasswordByUuid,
+  updatePasswordByUuid,
+  updateAdminStatusByUuid,
   findAllUsers,
 };

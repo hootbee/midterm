@@ -154,6 +154,54 @@ const deleteDMRoom = async (req, res) => {
   }
 };
 
+// @desc    Send a DM message in an existing room
+// @route   POST /api/dm/room/:roomId/messages
+// @access  Private
+const sendDMMessage = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { content } = req.body;
+    const senderUuid = req.user.uuid;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Message content is required.' });
+    }
+
+    const dmRoom = await DMRoom.findById(roomId);
+
+    if (!dmRoom) {
+      return res.status(404).json({ message: 'DM room not found.' });
+    }
+
+    if (!dmRoom.participants.includes(senderUuid)) {
+      return res.status(403).json({ message: 'Not authorized to send messages in this DM room.' });
+    }
+
+    const receiverUuid = dmRoom.participants.find((uuid) => uuid !== senderUuid) || senderUuid;
+
+    const newMessage = new DMMessage({
+      roomId: dmRoom._id,
+      senderUuid,
+      receiverUuid,
+      content,
+    });
+    await newMessage.save();
+
+    dmRoom.lastMessage = newMessage._id;
+    dmRoom.updatedAt = new Date();
+    await dmRoom.save();
+
+    if (ioInstance) {
+      ioInstance.to(dmRoom._id.toString()).emit('dm:message', newMessage);
+    }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error sending DM message:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Helper function to send system-generated DMs
 const SYSTEM_UUID = 'SYSTEM'; // A unique UUID for the system sender
 let ioInstance; // To hold the Socket.IO instance
@@ -201,6 +249,7 @@ module.exports = {
   getDMRooms,
   getDMMessages,
   leaveDMRoom,
+  sendDMMessage,
   deleteDMRoom,
   sendSystemDM,
   setIoInstance, // Export setIoInstance to allow setting the io instance from index.js

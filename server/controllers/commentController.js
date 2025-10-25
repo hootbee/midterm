@@ -1,6 +1,32 @@
 const Comment = require('../models/commentModel');
 const { AuctionItem, findById } = require('../models/auctionItemModel');
 
+const determineCommentIdentity = async (auctionItemId, commenterUuid, sellerUuid) => {
+  if (sellerUuid === commenterUuid) {
+    return { nickname: '판매자', commentOrder: null };
+  }
+
+  const existingAnonymousComment = await Comment.findOne(
+    { auctionItemId, commenterUuid, nickname: { $ne: '판매자' } },
+    { nickname: 1, commentOrder: 1 }
+  );
+
+  if (existingAnonymousComment) {
+    return {
+      nickname: existingAnonymousComment.nickname,
+      commentOrder: existingAnonymousComment.commentOrder,
+    };
+  }
+
+  const highestComment = await Comment.findOne(
+    { auctionItemId, nickname: { $ne: '판매자' } },
+    { commentOrder: 1 },
+    { sort: { commentOrder: -1 } }
+  );
+  const commentOrder = (highestComment && highestComment.commentOrder) ? highestComment.commentOrder + 1 : 1;
+  return { nickname: `익명${commentOrder}`, commentOrder };
+};
+
 // @desc    Create a new comment for an auction item
 // @route   POST /api/auctions/:auctionItemId/comments
 // @access  Private
@@ -19,33 +45,7 @@ const createComment = async (req, res) => {
       return res.status(404).json({ message: 'Auction item not found.' });
     }
 
-    let nickname;
-    let commentOrder = null;
-
-    if (auctionItem.sellerUuid === commenterUuid) {
-      nickname = '판매자';
-    } else {
-      // Check if this user (commenterUuid) has already posted an anonymous comment on this auction item
-      const existingAnonymousComment = await Comment.findOne(
-        { auctionItemId, commenterUuid, nickname: { $ne: '판매자' } },
-        { nickname: 1, commentOrder: 1 }
-      );
-
-      if (existingAnonymousComment) {
-        // If an existing anonymous comment is found, reuse its nickname and commentOrder
-        nickname = existingAnonymousComment.nickname;
-        commentOrder = existingAnonymousComment.commentOrder;
-      } else {
-        // If no existing anonymous comment, assign a new one
-        const highestComment = await Comment.findOne(
-          { auctionItemId, nickname: { $ne: '판매자' } },
-          { commentOrder: 1 },
-          { sort: { commentOrder: -1 } }
-        );
-        commentOrder = (highestComment && highestComment.commentOrder) ? highestComment.commentOrder + 1 : 1;
-        nickname = `익명${commentOrder}`;
-      }
-    }
+    const { nickname, commentOrder } = await determineCommentIdentity(auctionItemId, commenterUuid, auctionItem.sellerUuid);
 
     const newComment = new Comment({
       auctionItemId,
@@ -169,6 +169,52 @@ const deleteComment = async (req, res) => {
   }
 };
 
+// @desc    Reply to an existing comment
+// @route   POST /api/comments/:commentId/replies
+// @access  Private
+const replyToComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    const commenterUuid = req.user.uuid;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Reply content cannot be empty.' });
+    }
+
+    const parentComment = await Comment.findById(commentId);
+    if (!parentComment) {
+      return res.status(404).json({ message: 'Parent comment not found.' });
+    }
+
+    const auctionItem = await findById(parentComment.auctionItemId);
+    if (!auctionItem) {
+      return res.status(404).json({ message: 'Auction item not found.' });
+    }
+
+    const { nickname, commentOrder } = await determineCommentIdentity(
+      parentComment.auctionItemId,
+      commenterUuid,
+      auctionItem.sellerUuid
+    );
+
+    const replyComment = new Comment({
+      auctionItemId: parentComment.auctionItemId,
+      commenterUuid,
+      content,
+      nickname,
+      commentOrder,
+      parentId: parentComment._id,
+    });
+
+    const savedReply = await replyComment.save();
+    res.status(201).json(savedReply);
+  } catch (error) {
+    console.error('Error replying to comment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Delete all comments for a specific auction item
 // @route   DELETE /api/auctions/:auctionItemId/comments
 // @access  Private (seller or admin)
@@ -204,5 +250,6 @@ module.exports = {
   getComments,
   updateComment,
   deleteComment,
+  replyToComment,
   deleteCommentsForAuction,
 };

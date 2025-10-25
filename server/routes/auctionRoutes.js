@@ -143,7 +143,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, extendAuctionEndTime, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
@@ -589,6 +589,49 @@ router.put('/:id/mark-paid', authMiddleware, markPaid);
  *         description: Server error
  */
 router.put('/:id/mark-completed', authMiddleware, markCompleted);
+
+/**
+ * @swagger
+ * /api/auctions/{id}/extend:
+ *   put:
+ *     summary: Extend the end time of an auction (Seller or Admin)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to extend
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - extendMinutes
+ *             properties:
+ *               extendMinutes:
+ *                 type: integer
+ *                 description: Minutes to add to the current end time
+ *     responses:
+ *       200:
+ *         description: Auction end time extended successfully
+ *       400:
+ *         description: Invalid minutes provided
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the seller or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id/extend', authMiddleware, extendAuctionEndTime);
 
 /**
  * @swagger

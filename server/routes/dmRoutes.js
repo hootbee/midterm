@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOrCreateDMRoom, getDMRooms, getDMMessages, leaveDMRoom, deleteDMRoom } = require('../controllers/dmController');
+const { getOrCreateDMRoom, getDMRooms, getDMMessages, leaveDMRoom, sendDMMessage, deleteDMRoom } = require('../controllers/dmController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -152,6 +152,49 @@ router.get('/rooms', authMiddleware, getDMRooms);
  *         description: Server error
  */
 router.get('/room/:roomId/messages', authMiddleware, getDMMessages);
+
+/**
+ * @swagger
+ * /api/dm/room/{roomId}/messages:
+ *   post:
+ *     summary: Send a new DM message
+ *     tags: [Direct Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the DM room
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: Message text
+ *     responses:
+ *       201:
+ *         description: Message sent successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized to send messages in this room
+ *       404:
+ *         description: DM room not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/room/:roomId/messages', authMiddleware, sendDMMessage);
 
 /**
  * @swagger

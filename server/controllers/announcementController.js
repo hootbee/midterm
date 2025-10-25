@@ -131,6 +131,61 @@ const toggleBannerStatus = async (req, res) => {
   }
 };
 
+// @desc    Bulk create announcements
+// @route   POST /api/announcements/bulk
+// @access  Private/Admin
+const bulkCreateAnnouncements = async (req, res) => {
+  try {
+    const { announcements } = req.body;
+
+    if (!Array.isArray(announcements) || announcements.length === 0) {
+      return res.status(400).json({ message: 'Announcements array is required.' });
+    }
+
+    const sanitizedAnnouncements = announcements
+      .filter((item) => item.title && item.content)
+      .map((item) => ({
+        title: item.title,
+        content: item.content,
+      }));
+
+    if (sanitizedAnnouncements.length === 0) {
+      return res.status(400).json({ message: 'Every announcement must include a title and content.' });
+    }
+
+    const createdAnnouncements = await Announcement.insertMany(sanitizedAnnouncements);
+    res.status(201).json(createdAnnouncements);
+  } catch (error) {
+    console.error('Error bulk creating announcements:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Set specific announcement as banner
+// @route   POST /api/announcements/:id/banner
+// @access  Private/Admin
+const setBannerAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const announcement = await Announcement.findById(id);
+
+    if (!announcement) {
+      return res.status(404).json({ message: 'Announcement not found.' });
+    }
+
+    await Announcement.updateMany({ isBanner: true }, { isBanner: false });
+
+    announcement.isBanner = true;
+    const updatedAnnouncement = await announcement.save();
+
+    res.status(200).json(updatedAnnouncement);
+  } catch (error) {
+    console.error('Error setting banner announcement:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Delete all announcements
 // @route   DELETE /api/announcements
 // @access  Private/Admin
@@ -175,6 +230,8 @@ module.exports = {
   updateAnnouncement,
   deleteAnnouncement,
   toggleBannerStatus,
+  bulkCreateAnnouncements,
+  setBannerAnnouncement,
   deleteAllAnnouncements,
   clearBannerAnnouncement,
 };

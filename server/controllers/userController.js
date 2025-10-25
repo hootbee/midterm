@@ -1,4 +1,4 @@
-const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid, findAllUsers } = require('../models/userModel');
+const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid, findAllUsers, findUserWithPasswordByUuid, updatePasswordByUuid, updateAdminStatusByUuid } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -177,6 +177,39 @@ const deleteMyAccount = async (req, res) => {
   }
 };
 
+// @desc    Update current user's password
+// @route   PUT /api/users/password
+// @access  Private
+const updateMyPassword = async (req, res) => {
+  try {
+    const userUuid = req.user.uuid;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required.' });
+    }
+
+    const user = await findUserWithPasswordByUuid(userUuid);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    await updatePasswordByUuid(userUuid, hashedPassword);
+
+    res.json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
@@ -238,6 +271,30 @@ const updateUserReputation = async (req, res) => {
     res.json({ message: 'Reputation score updated successfully.' });
   } catch (error) {
     console.error('Error updating reputation score:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Update a user's admin status
+// @route   PUT /api/users/:uuid/admin
+// @access  Admin
+const updateUserAdminStatus = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { isAdmin } = req.body;
+
+    if (typeof isAdmin !== 'boolean') {
+      return res.status(400).json({ message: 'isAdmin flag must be provided as a boolean.' });
+    }
+
+    const result = await updateAdminStatusByUuid(uuid, isAdmin);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json({ message: 'User admin status updated successfully.' });
+  } catch (error) {
+    console.error('Error updating admin status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -306,8 +363,10 @@ module.exports = {
   getMe,
   deleteUser,
   deleteMyAccount,
+  updateMyPassword,
   updateUserProfile,
   updateUserReputation,
+  updateUserAdminStatus,
   updateUserBalance,
   getAllUsers,
 };

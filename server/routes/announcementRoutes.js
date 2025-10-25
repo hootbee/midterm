@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAnnouncement, getAnnouncements, getBannerAnnouncement, updateAnnouncement, deleteAnnouncement, toggleBannerStatus, deleteAllAnnouncements, clearBannerAnnouncement } = require('../controllers/announcementController');
+const { createAnnouncement, getAnnouncements, getBannerAnnouncement, updateAnnouncement, deleteAnnouncement, toggleBannerStatus, bulkCreateAnnouncements, setBannerAnnouncement, deleteAllAnnouncements, clearBannerAnnouncement } = require('../controllers/announcementController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -125,6 +125,40 @@ const adminMiddleware = require('../middleware/adminMiddleware');
 router.post('/', authMiddleware, adminMiddleware, createAnnouncement);
 router.get('/', getAnnouncements);
 router.delete('/', authMiddleware, adminMiddleware, deleteAllAnnouncements);
+/**
+ * @swagger
+ * /api/announcements/bulk:
+ *   post:
+ *     summary: Bulk create announcements (Admin only)
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - announcements
+ *             properties:
+ *               announcements:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/NewAnnouncement'
+ *     responses:
+ *       201:
+ *         description: Announcements created successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       500:
+ *         description: Server error
+ */
+router.post('/bulk', authMiddleware, adminMiddleware, bulkCreateAnnouncements);
 
 /**
  * @swagger
@@ -227,6 +261,34 @@ router.delete('/banner', authMiddleware, adminMiddleware, clearBannerAnnouncemen
  */
 router.put('/:id', authMiddleware, adminMiddleware, updateAnnouncement);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteAnnouncement);
+/**
+ * @swagger
+ * /api/announcements/{id}/banner:
+ *   post:
+ *     summary: Set an announcement as banner (Admin only)
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the announcement to set as banner
+ *     responses:
+ *       200:
+ *         description: Announcement set as banner successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       404:
+ *         description: Announcement not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/:id/banner', authMiddleware, adminMiddleware, setBannerAnnouncement);
 
 /**
  * @swagger

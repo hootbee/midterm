@@ -100,7 +100,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid, getMe, deleteUser, deleteMyAccount, updateUserProfile, updateUserReputation, updateUserBalance, getAllUsers } = require('../controllers/userController');
+const { signup, login, searchUserByUuid, getMe, deleteUser, deleteMyAccount, updateMyPassword, updateUserProfile, updateUserReputation, updateUserAdminStatus, updateUserBalance, getAllUsers } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -284,6 +284,42 @@ router.delete('/me', authMiddleware, deleteMyAccount);
 
 /**
  * @swagger
+ * /api/users/password:
+ *   put:
+ *     summary: Update current user's password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *       400:
+ *         description: Invalid input or incorrect password
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/password', authMiddleware, updateMyPassword);
+
+/**
+ * @swagger
  * /api/users/{uuid}:
  *   delete:
  *     summary: Delete a user by UUID (Admin only)
@@ -360,6 +396,52 @@ router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
  *         description: Server error
  */
 router.put('/profile', authMiddleware, updateUserProfile);
+
+/**
+ * @swagger
+ * /api/users/{uuid}/admin:
+ *   put:
+ *     summary: Update a user's admin status (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID of the user to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isAdmin
+ *             properties:
+ *               isAdmin:
+ *                 type: boolean
+ *                 description: Desired admin status
+ *             example:
+ *               isAdmin: true
+ *     responses:
+ *       200:
+ *         description: Admin status updated successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       403:
+ *         description: Forbidden, not an admin user
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:uuid/admin', authMiddleware, adminMiddleware, updateUserAdminStatus);
 
 /**
  * @swagger

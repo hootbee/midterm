@@ -68,6 +68,48 @@ const getFavoriteStatus = async (req, res) => {
   }
 };
 
+// @desc    Import multiple favorites at once
+// @route   POST /api/favorites/import
+// @access  Private
+const importFavorites = async (req, res) => {
+  try {
+    const { auctionItemIds } = req.body;
+    const userUuid = req.user.uuid;
+
+    if (!Array.isArray(auctionItemIds) || auctionItemIds.length === 0) {
+      return res.status(400).json({ message: 'auctionItemIds must be a non-empty array.' });
+    }
+
+    const uniqueIds = [...new Set(auctionItemIds.filter(Boolean))];
+    if (uniqueIds.length === 0) {
+      return res.status(400).json({ message: 'Valid auction item IDs are required.' });
+    }
+
+    const existingFavorites = await FavoriteAuction.find({
+      userUuid,
+      auctionItemId: { $in: uniqueIds },
+    });
+    const existingSet = new Set(existingFavorites.map((fav) => fav.auctionItemId.toString()));
+
+    const favoritesToInsert = uniqueIds
+      .filter((id) => !existingSet.has(id))
+      .map((id) => ({ userUuid, auctionItemId: id }));
+
+    if (favoritesToInsert.length === 0) {
+      return res.status(200).json({ message: 'All provided auction items are already in favorites.', insertedCount: 0 });
+    }
+
+    const insertedFavorites = await FavoriteAuction.insertMany(favoritesToInsert);
+    res.status(201).json({
+      message: 'Favorites imported successfully.',
+      insertedCount: insertedFavorites.length,
+    });
+  } catch (error) {
+    console.error('Error importing favorites:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Remove a specific auction item from favorites
 // @route   DELETE /api/favorites/:auctionItemId
 // @access  Private
@@ -111,6 +153,7 @@ module.exports = {
   toggleFavorite,
   getFavorites,
   getFavoriteStatus,
+  importFavorites,
   removeFavorite,
   clearFavorites,
 };

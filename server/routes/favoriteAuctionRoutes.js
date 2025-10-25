@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { toggleFavorite, getFavorites, getFavoriteStatus, removeFavorite, clearFavorites } = require('../controllers/favoriteAuctionController');
+const { toggleFavorite, getFavorites, getFavoriteStatus, importFavorites, removeFavorite, clearFavorites } = require('../controllers/favoriteAuctionController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -111,6 +111,40 @@ router.post('/toggle', authMiddleware, toggleFavorite);
  */
 router.get('/', authMiddleware, getFavorites);
 router.delete('/', authMiddleware, clearFavorites);
+
+/**
+ * @swagger
+ * /api/favorites/import:
+ *   post:
+ *     summary: Import multiple favorite auction items
+ *     tags: [Favorite Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - auctionItemIds
+ *             properties:
+ *               auctionItemIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: IDs of auction items to add to favorites
+ *     responses:
+ *       201:
+ *         description: Favorites imported successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post('/import', authMiddleware, importFavorites);
 
 /**
  * @swagger

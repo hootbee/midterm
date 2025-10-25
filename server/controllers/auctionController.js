@@ -367,6 +367,41 @@ const cancelAuction = async (req, res) => {
   }
 };
 
+// @desc    Extend the end time for an auction
+// @route   PUT /api/auctions/:id/extend
+// @access  Private (Seller or Admin)
+const extendAuctionEndTime = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { extendMinutes } = req.body;
+    const currentUserUuid = req.user.uuid;
+    const isAdmin = req.user.admin;
+
+    const minutesToExtend = parseInt(extendMinutes, 10);
+    if (isNaN(minutesToExtend) || minutesToExtend <= 0) {
+      return res.status(400).json({ message: 'extendMinutes must be a positive number.' });
+    }
+
+    const item = await findById(id);
+    if (!item) {
+      return res.status(404).json({ message: 'Auction item not found.' });
+    }
+
+    if (item.sellerUuid !== currentUserUuid && !isAdmin) {
+      return res.status(403).json({ message: 'Only the seller or admin can extend this auction.' });
+    }
+
+    const newEndTime = new Date(item.endTime.getTime() + minutesToExtend * 60000);
+    item.endTime = newEndTime;
+    await item.save();
+
+    res.status(200).json({ message: 'Auction end time extended successfully.', endTime: item.endTime });
+  } catch (error) {
+    console.error('Error extending auction:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // ... (other controller functions)
 
 const reportAuctionItem = async (req, res) => {
@@ -532,6 +567,7 @@ module.exports = {
   markPaid,
   markCompleted,
   cancelAuction,
+  extendAuctionEndTime,
   hideAuctionsForBidder,
   hideAuctionsForSeller,
 };

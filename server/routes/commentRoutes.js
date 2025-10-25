@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createComment, getComments, updateComment, deleteComment, deleteCommentsForAuction } = require('../controllers/commentController');
+const { createComment, getComments, updateComment, deleteComment, replyToComment, deleteCommentsForAuction } = require('../controllers/commentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -142,6 +142,43 @@ const adminMiddleware = require('../middleware/adminMiddleware');
 router.post('/auctions/:auctionItemId/comments', authMiddleware, createComment);
 router.get('/auctions/:auctionItemId/comments', getComments);
 router.delete('/auctions/:auctionItemId/comments', authMiddleware, deleteCommentsForAuction);
+
+/**
+ * @swagger
+ * /api/comments/{commentId}/replies:
+ *   post:
+ *     summary: Reply to a comment
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the comment to reply to
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewComment'
+ *     responses:
+ *       201:
+ *         description: Reply created successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       403:
+ *         description: Forbidden, not authorized to reply
+ *       404:
+ *         description: Comment or auction item not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/comments/:commentId/replies', authMiddleware, replyToComment);
 
 /**
  * @swagger
