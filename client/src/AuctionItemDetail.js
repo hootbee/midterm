@@ -25,6 +25,33 @@ const biddingCardStyle = {
   backgroundColor: '#f8f9fa',
 };
 
+const Countdown = ({ endTime }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const end = new Date(endTime);
+      const difference = end - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+        setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft('경매 종료');
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  return <span>{timeLeft}</span>;
+};
+
 function AuctionItemDetail() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +60,8 @@ function AuctionItemDetail() {
   const [newEndTime, setNewEndTime] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false); // New state for favorite status
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [timeExtended, setTimeExtended] = useState(false);
   const { id } = useParams();
   const socketRef = useRef(null);
   const navigate = useNavigate();
@@ -69,6 +97,11 @@ function AuctionItemDetail() {
     }
   };
 
+  const itemRef = useRef(item);
+  useEffect(() => {
+    itemRef.current = item;
+  }, [item]);
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
@@ -90,7 +123,7 @@ function AuctionItemDetail() {
 
     const fetchFavoriteStatus = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return; // Cannot fetch favorite status without being logged in
+      if (!token) return;
 
       try {
         const res = await fetch(`/api/favorites/status/${id}`, {
@@ -102,7 +135,6 @@ function AuctionItemDetail() {
           const data = await res.json();
           setIsFavorited(data.isFavorited);
         } else if (res.status === 401) {
-          // User is not authenticated, so not favorited
           setIsFavorited(false);
         } else {
           throw new Error('즐겨찾기 상태를 불러오는 데 실패했습니다.');
@@ -126,6 +158,10 @@ function AuctionItemDetail() {
       });
       socket.on('bid_update', (updatedItem) => {
         console.log('Received bid update:', updatedItem);
+        if (itemRef.current && new Date(updatedItem.endTime) > new Date(itemRef.current.endTime)) {
+          setTimeExtended(true);
+          setTimeout(() => setTimeExtended(false), 3000);
+        }
         setItem(updatedItem);
       });
       socket.on('bid_error', (error) => {
@@ -191,14 +227,12 @@ function AuctionItemDetail() {
       const disposition = res.headers.get('content-disposition');
       let filename = item.filePath.split('-').pop();
       if (disposition && disposition.includes('attachment')) {
-        // filename="example.txt" 또는 filename=example.txt 모두 대응
-        const filenameRegex = /filename[^;=\n]*=\s*(?:(['"])(.*?)\1|([^;\n]*))/;
+        const filenameRegex = /filename[^;=\\n]*=\s*(?:(['"])(.*?)\1|([^;\\n]*))/;
         const matches = filenameRegex.exec(disposition);
 
         if (matches) {
-          // 따옴표로 감싼 경우 → matches[2], 아닐 경우 → matches[3]
           filename = (matches[2] || matches[3]).trim();
-          filename = filename.replace(/['"]/g, ''); // 불필요한 따옴표 제거
+          filename = filename.replace(/['"]/g, '');
         }
       }
       a.download = filename;
@@ -241,14 +275,15 @@ function AuctionItemDetail() {
   const handleEndTimeUpdate = async () => {
     const token = localStorage.getItem('token');
     try {
-        const res = await fetch(`/api/auctions/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ endTime: newEndTime }),
-        });
+        const res = await fetch(`/api/auctions/${id}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ endTime: newEndTime }),
+            });
 
         if (res.ok) {
             const updatedItem = await res.json();
@@ -275,12 +310,13 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${id}/mark-${statusType}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(`/api/auctions/${id}/mark-${statusType}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
       if (res.ok) {
         const updatedItem = await res.json();
@@ -344,8 +380,8 @@ function AuctionItemDetail() {
 
   const isSeller = item.sellerUuid === currentUserUuid;
   const isAuctionOver = new Date() > new Date(item.endTime);
-  const isWinner = item.winnerUuid === currentUserUuid; // Use item.winnerUuid
-  const canBid = token && item.status === 'active' && !isSeller && !isAuctionOver; // Only if active
+  const isWinner = item.winnerUuid === currentUserUuid;
+  const canBid = token && item.status === 'active' && !isSeller && !isAuctionOver;
 
   let transactionStatusText = '-';
   switch (item.transactionStatus) {
@@ -374,6 +410,8 @@ function AuctionItemDetail() {
       <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
       <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
       <p><strong>마감 시간:</strong> {new Date(item.endTime).toLocaleString()}</p>
+      <p><strong>남은 시간:</strong> <Countdown endTime={item.endTime} /></p>
+      {timeExtended && <p style={{color: 'red', fontWeight: 'bold'}}>마감 시간이 1분 연장되었습니다!</p>}
       <p><strong>경매 상태:</strong> {item.status === 'active' ? '진행 중' : item.status === 'ended' ? '마감됨' : item.status === 'sold' ? '판매됨' : '취소됨'}</p>
       {item.status !== 'active' && item.winnerUuid && <p><strong>낙찰자 UUID:</strong> {item.winnerUuid}</p>}
       {item.status !== 'active' && item.winnerUuid && <p><strong>거래 상태:</strong> {transactionStatusText}</p>}
