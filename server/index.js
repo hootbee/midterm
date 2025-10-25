@@ -16,6 +16,7 @@ const announcementRoutes = require('./routes/announcementRoutes');
 const favoriteAuctionRoutes = require('./routes/favoriteAuctionRoutes');
 const cron = require('node-cron'); // Import node-cron
 const { processEndedAuctions } = require('./controllers/auctionController'); // Import processEndedAuctions
+const { createSystemUserIfNeeded } = require('./config/systemUser');
 
 // --- Swagger Setup ---
 const swaggerUi = require('swagger-ui-express');
@@ -136,6 +137,7 @@ const startServer = async () => {
       await initializeMariaDB(); // For MariaDB
       console.log("✅ MariaDB initialized successfully.");
       await createAdminUserIfNeeded();
+      await createSystemUserIfNeeded();
       await connectMongo(); // For MongoDB
       console.log("✅ MongoDB connected successfully.");
 

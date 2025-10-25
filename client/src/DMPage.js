@@ -250,7 +250,7 @@ function DMPage() {
             }}
           >
             {/* Display other participant's UUID */}
-            <strong>{room.participants.find(uuid => uuid !== currentUserUuid)}</strong>
+            <strong>{room.participants.find(uuid => uuid !== currentUserUuid) === 'SYSTEM' ? 'SYSTEM' : room.participants.find(uuid => uuid !== currentUserUuid)}</strong>
             {room.lastMessage && <p style={{ fontSize: '0.8em', color: '#666' }}>{room.lastMessage.content}</p>}
           </div>
         ))}
@@ -302,7 +302,7 @@ function DMPage() {
                   }}
                 >
                   <span style={{ fontSize: '0.8em', color: '#888' }}>
-                    {msg.senderUuid === currentUserUuid ? '나' : msg.senderUuid.substring(0, 8)} - {new Date(msg.createdAt).toLocaleTimeString()}
+                    {msg.senderUuid === currentUserUuid ? '나' : msg.senderUuid === 'SYSTEM' ? 'SYSTEM' : msg.senderUuid.substring(0, 8)} - {new Date(msg.createdAt).toLocaleTimeString()}
                   </span>
                   <div
                     style={{

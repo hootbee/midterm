@@ -7,30 +7,39 @@ const path = require('path');
 
 // Function to process ended auctions
 const processEndedAuctions = async () => {
+  console.log('--- Running processEndedAuctions ---');
   try {
     const now = new Date();
+    console.log('Current time (UTC):', now.toISOString());
     const endedAuctions = await AuctionItem.find({ endTime: { $lte: now }, status: 'active' });
+    console.log(`Found ${endedAuctions.length} ended auctions.`);
 
     for (const item of endedAuctions) {
+      console.log('Processing auction item:', item._id);
       item.status = 'ended';
       if (item.highestBidderUuid) {
         item.winnerUuid = item.highestBidderUuid;
         item.transactionStatus = 'pending_payment';
 
+        console.log(`Auction ${item._id} won by ${item.winnerUuid}. Sending DMs...`);
         // Send DM to winner
         await sendSystemDM(item.winnerUuid, `축하합니다! \'${item.title}\' 경매에 낙찰되셨습니다. 판매자와 연락하여 거래를 진행해주세요.`);
         // Send DM to seller
         await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매가 종료되었습니다. 낙찰자(${item.winnerUuid.substring(0, 8)}...)와 연락하여 거래를 진행해주세요.`);
+        console.log(`DMs for auction ${item._id} sent.`);
       } else {
+        console.log(`Auction ${item._id} ended with no bids. Sending DM to seller...`);
         // No bids, auction ended without a winner
         await sendSystemDM(item.sellerUuid, `\'${item.title}\' 경매가 입찰자 없이 종료되었습니다.`);
+        console.log(`DM for auction ${item._id} sent.`);
       }
       await item.save();
-      console.log(`Auction ${item._id} ended and processed.`);
+      console.log(`Auction ${item._id} ended and processed successfully.`);
     }
   } catch (error) {
     console.error('Error processing ended auctions:', error);
   }
+  console.log('--- Finished processEndedAuctions ---');
 };
 
 // @desc    Create a new auction item

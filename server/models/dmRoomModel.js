@@ -7,6 +7,11 @@ const dmRoomSchema = new mongoose.Schema({
       required: true,
     },
   ],
+  participantsKey: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   lastMessage: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DMMessage',
@@ -21,8 +26,6 @@ const dmRoomSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
-dmRoomSchema.index({ participants: 1 }, { unique: true }); // Ensure unique rooms for a pair of participants
 
 const DMRoom = mongoose.model('DMRoom', dmRoomSchema);
 

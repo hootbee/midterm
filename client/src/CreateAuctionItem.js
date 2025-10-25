@@ -41,7 +41,7 @@ function CreateAuctionItem() {
     formData.append('title', title);
     formData.append('content', content);
     formData.append('startPrice', startPrice);
-    formData.append('endTime', endTime);
+    formData.append('endTime', new Date(endTime).toISOString());
 
     try {
       const res = await fetch('/api/auctions', {

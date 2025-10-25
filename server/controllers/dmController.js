@@ -23,11 +23,12 @@ const getOrCreateDMRoom = async (req, res) => {
     }
 
     const participants = getSortedParticipants(currentUserUuid, targetUserUuid);
+    const participantsKey = participants.join('_');
 
-    let dmRoom = await DMRoom.findOne({ participants: { $all: participants } });
+    let dmRoom = await DMRoom.findOne({ participantsKey });
 
     if (!dmRoom) {
-      dmRoom = new DMRoom({ participants });
+      dmRoom = new DMRoom({ participants, participantsKey });
       await dmRoom.save();
     }
 
@@ -125,7 +126,7 @@ const leaveDMRoom = async (req, res) => {
 };
 
 // Helper function to send system-generated DMs
-const SYSTEM_UUID = 'system-notification-uuid'; // A unique UUID for the system sender
+const SYSTEM_UUID = 'SYSTEM'; // A unique UUID for the system sender
 let ioInstance; // To hold the Socket.IO instance
 
 const setIoInstance = (io) => {
@@ -135,11 +136,12 @@ const setIoInstance = (io) => {
 const sendSystemDM = async (receiverUuid, content) => {
   try {
     const participants = getSortedParticipants(SYSTEM_UUID, receiverUuid);
+    const participantsKey = participants.join('_');
 
-    let dmRoom = await DMRoom.findOne({ participants: { $all: participants } });
+    let dmRoom = await DMRoom.findOne({ participantsKey });
 
     if (!dmRoom) {
-      dmRoom = new DMRoom({ participants });
+      dmRoom = new DMRoom({ participants, participantsKey });
       await dmRoom.save();
     }
 

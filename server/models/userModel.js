@@ -87,7 +87,7 @@ const findUserByEmailOrStudentId = async (email, studentId) => {
 // Function to create a new user
 const createUser = async (userData) => {
   let conn;
-  const { name, email, student_id, password, admin = false } = userData; // Default admin to false
+  const { name, email, student_id, password, admin = false, uuid } = userData; // Default admin to false
 
   try {
     conn = await pool.getConnection();
@@ -96,8 +96,8 @@ const createUser = async (userData) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate UUID
-    const newUserUUID = uuidv4();
+    // Generate UUID if not provided
+    const newUserUUID = uuid || uuidv4();
 
     const query = 'INSERT INTO users (name, email, student_id, password, uuid, admin) VALUES (?, ?, ?, ?, ?, ?)';
     const result = await conn.query(query, [name, email, student_id, hashedPassword, newUserUUID, admin]);
