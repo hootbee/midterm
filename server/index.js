@@ -22,6 +22,13 @@ const { createSystemUserIfNeeded } = require('./config/systemUser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
+const SERVER_HOST = process.env.SERVER_HOST || '172.22.147.93';
+const CLIENT_HOST = process.env.CLIENT_HOST || '172.22.147.93';
+const port = parseInt(process.env.PORT_SERVER, 10) || 3280;
+const clientPort = parseInt(process.env.PORT_CLIENT, 10) || 3270;
+const apiBaseUrl = process.env.API_BASE_URL || `http://${SERVER_HOST}:${port}`;
+const clientOrigin = process.env.CLIENT_ORIGIN || `http://${CLIENT_HOST}:${clientPort}`;
+
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -36,7 +43,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
+        url: apiBaseUrl,
         description: 'Development server',
       },
     ],
@@ -64,12 +71,10 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Initialize
 const app = express();
-
-const port = 3001; // From user's snippet
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000", // Allow requests from the React client
+    origin: clientOrigin, // Allow requests from the React client
     methods: ["GET", "POST"]
   }
 });
@@ -149,8 +154,8 @@ const startServer = async () => {
       console.log("✅ Cron job scheduled for processing ended auctions.");
 
       httpServer.listen(port, () => {
-        console.log(`✅ Backend server with Socket.IO listening at http://localhost:${port}`);
-        console.log(`📖 Swagger UI available at http://localhost:${port}/api-docs`);
+        console.log(`✅ Backend server with Socket.IO listening at ${apiBaseUrl}`);
+        console.log(`📖 Swagger UI available at ${apiBaseUrl}/api-docs`);
       });
   } catch (error) {
       console.error('❌ Failed to start the server:', error);
