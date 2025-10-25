@@ -147,6 +147,7 @@ const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
+const optionalAuthMiddleware = require('../middleware/optionalAuthMiddleware');
 
 router.put('/hide-for-user', authMiddleware, hideAuctionsForBidder);
 router.put('/hide-for-seller', authMiddleware, hideAuctionsForSeller);
@@ -226,7 +227,7 @@ router.put('/hide-for-seller', authMiddleware, hideAuctionsForSeller);
  *       500:
  *         description: Server error
  */
-router.get('/', getAuctionItems);
+router.get('/', optionalAuthMiddleware, getAuctionItems);
 router.post('/', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'itemFile', maxCount: 1 }]), createAuctionItem);
 
 /**

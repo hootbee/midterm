@@ -38,13 +38,18 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
     const fetchItems = async () => {
       const searchTerm = searchParams.get('search');
       const searchType = searchParams.get('type');
+      const token = localStorage.getItem('token');
       
       try {
         let url = `/api/auctions?page=${currentPage}&limit=5`;
         if (searchTerm && searchType) {
           url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
         }
-        const res = await fetch(url);
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(url, { headers });
         const data = await res.json();
         if (res.ok) {
           setItems(data.items);
@@ -201,7 +206,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
 
       <div style={containerStyle}>
         {items.map(item => (
-          <div key={item._id} style={itemCardStyle}>
+          <div key={item._id} style={{...itemCardStyle, border: item.isFavorited ? '2px solid yellow' : itemCardStyle.border}}>
             {isSelectionMode && (
               <input
                 type="checkbox"

@@ -66,6 +66,7 @@ const AllUsers = () => {
             <th style={{ padding: '8px', textAlign: 'left' }}>이름</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>이메일</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>학번</th>
+            <th style={{ padding: '8px', textAlign: 'left' }}>UUID</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>평판</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>잔액</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>가입일</th>
@@ -77,6 +78,7 @@ const AllUsers = () => {
               <td style={{ padding: '8px' }}>{user.name}</td>
               <td style={{ padding: '8px' }}>{user.email}</td>
               <td style={{ padding: '8px' }}>{user.student_id}</td>
+              <td style={{ padding: '8px' }}>{user.uuid}</td>
               <td style={{ padding: '8px' }}>{user.reputation_score}</td>
               <td style={{ padding: '8px' }}>{user.balance.toLocaleString()}원</td>
               <td style={{ padding: '8px' }}>{new Date(user.created_at).toLocaleDateString()}</td>

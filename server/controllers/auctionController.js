@@ -90,16 +90,31 @@ const createAuctionItem = async (req, res) => {
   }
 };
 
+const FavoriteAuction = require('../models/favoriteAuctionModel');
+
 const getAuctionItems = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
     const { search, type } = req.query;
 
+    let favoriteAuctionIds = [];
+    if (req.user) {
+      const userFavorites = await FavoriteAuction.find({ userUuid: req.user.uuid });
+      favoriteAuctionIds = userFavorites.map(fav => fav.auctionItemId.toString());
+    }
+
     const { items, totalItems } = await findAllAuctionItems({ page, limit, search, type });
 
+    const itemsWithFavorites = items.map(item => ({
+      ...item.toObject(),
+      isFavorited: favoriteAuctionIds.includes(item._id.toString()),
+    }));
+
+    itemsWithFavorites.sort((a, b) => b.isFavorited - a.isFavorited);
+
     res.json({
-      items,
+      items: itemsWithFavorites,
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
       currentPage: page,
