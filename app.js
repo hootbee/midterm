@@ -42,10 +42,4 @@ run(
 );
 
 // 2) 클라이언트: CRA 개발 서버 ( client 디렉토리에서 실행 )
-run("client", "npm", ["start", "--prefix", "client"], {
-  env: {
-    ...process.env,
-    PORT: process.env.PORT_CLIENT || 3270,
-    HOST: process.env.CLIENT_HOST || '0.0.0.0',
-  },
-});
+run("client", "npm", ["start", "--prefix", "client"]);

@@ -1,6 +1,7 @@
-require('dotenv').config();
-const express = require('express');
 const path = require('path');
+
+require('dotenv').config({ path: path.resolve(__dirname, '..', '..', '.env') });
+const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectMongo = require('./config/mongo');
@@ -22,12 +23,9 @@ const { createSystemUserIfNeeded } = require('./config/systemUser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
-const SERVER_HOST = process.env.SERVER_HOST || '172.22.147.93';
-const CLIENT_HOST = process.env.CLIENT_HOST || '172.22.147.93';
 const port = parseInt(process.env.PORT_SERVER, 10) || 3280;
-const clientPort = parseInt(process.env.PORT_CLIENT, 10) || 3270;
-const apiBaseUrl = process.env.API_BASE_URL || `http://${SERVER_HOST}:${port}`;
-const clientOrigin = process.env.CLIENT_ORIGIN || `http://${CLIENT_HOST}:${clientPort}`;
+const apiBaseUrl = process.env.API_BASE_URL || process.env.REACT_APP_API_URL || `http://172.22.147.93:${port}`;
+const clientOrigin = process.env.CLIENT_ORIGIN || process.env.REACT_APP_CLIENT_ORIGIN || 'http://localhost:3000';
 
 const swaggerOptions = {
   swaggerDefinition: {

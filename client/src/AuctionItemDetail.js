@@ -3,9 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.22.147.93:3280';
-const SOCKET_ENDPOINT = process.env.REACT_APP_SOCKET_URL || API_BASE_URL;
+import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
 const detailContainerStyle = {
   position: 'relative',
@@ -78,7 +76,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/favorites/toggle`, {
+      const res = await fetch(buildApiUrl('/api/favorites/toggle'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +107,7 @@ function AuctionItemDetail() {
     const fetchItem = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/api/auctions/${id}`);
+        const res = await fetch(buildApiUrl(`/api/auctions/${id}`));
         if (!res.ok) throw new Error('아이템을 찾을 수 없습니다.');
         const data = await res.json();
         setItem(data);
@@ -129,7 +127,7 @@ function AuctionItemDetail() {
       if (!token) return;
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/favorites/status/${id}`, {
+        const res = await fetch(buildApiUrl(`/api/favorites/status/${id}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -191,7 +189,7 @@ function AuctionItemDetail() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${id}`, {
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -213,7 +211,7 @@ function AuctionItemDetail() {
   const handleDownload = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${id}/download`, {
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}/download`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -252,7 +250,7 @@ function AuctionItemDetail() {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${id}`, {
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +276,7 @@ function AuctionItemDetail() {
   const handleEndTimeUpdate = async () => {
     const token = localStorage.getItem('token');
     try {
-        const res = await fetch(`${API_BASE_URL}/api/auctions/${id}`,
+        const res = await fetch(buildApiUrl(`/api/auctions/${id}`),
             {
                 method: 'PUT',
                 headers: {
@@ -313,7 +311,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${id}/mark-${statusType}`,
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}/mark-${statusType}`),
         {
           method: 'PUT',
           headers: {
@@ -346,7 +344,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${id}/cancel`, {
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}/cancel`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -525,7 +523,7 @@ const ReportForm = ({ itemId, onCancel }) => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/${itemId}/report`, {
+      const res = await fetch(buildApiUrl(`/api/auctions/${itemId}/report`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

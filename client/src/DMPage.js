@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.22.147.93:3280';
-const ENDPOINT = API_BASE_URL; // Backend server URL
+import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
 function DMPage() {
   const [showNewChatInput, setShowNewChatInput] = useState(false);
@@ -38,7 +36,7 @@ function DMPage() {
     if (!contextMenuRoomId || !token) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/dm/room/${contextMenuRoomId}/leave`, {
+      const res = await fetch(buildApiUrl(`/api/dm/room/${contextMenuRoomId}/leave`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -72,7 +70,7 @@ function DMPage() {
       return;
     }
 
-    socket.current = io(ENDPOINT, {
+    socket.current = io(SOCKET_ENDPOINT, {
       auth: { token }, // Send token in auth object
       transports: ['websocket', 'polling'],
     });
@@ -114,7 +112,7 @@ function DMPage() {
     const fetchDMRooms = async () => {
       if (!token) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dm/rooms`, {
+        const res = await fetch(buildApiUrl('/api/dm/rooms'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -136,7 +134,7 @@ function DMPage() {
     const fetchMessages = async () => {
       if (!selectedRoom || !token) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dm/room/${selectedRoom._id}/messages`, {
+        const res = await fetch(buildApiUrl(`/api/dm/room/${selectedRoom._id}/messages`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -167,7 +165,7 @@ function DMPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/dm/room`, {
+      const res = await fetch(buildApiUrl('/api/dm/room'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
