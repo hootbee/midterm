@@ -17,6 +17,7 @@ const favoriteAuctionRoutes = require('./routes/favoriteAuctionRoutes');
 const cron = require('node-cron'); // Import node-cron
 const { processEndedAuctions } = require('./controllers/auctionController'); // Import processEndedAuctions
 const { createSystemUserIfNeeded } = require('./config/systemUser');
+const cors = require('cors');
 
 // --- Swagger Setup ---
 const swaggerUi = require('swagger-ui-express');
@@ -36,7 +37,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
+        url: `http://localhost:${process.env.PORT_SERVER || 3001}`,
         description: 'Development server',
       },
     ],
@@ -65,11 +66,11 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Initialize
 const app = express();
 
-const port = 3001; // From user's snippet
+const port = process.env.PORT_SERVER || 3001;
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000", // Allow requests from the React client
+    origin: `http://localhost:${process.env.PORT_CLIENT || 3000}`, // Allow requests from the React client
     methods: ["GET", "POST"]
   }
 });
@@ -81,6 +82,7 @@ setIoInstance(io); // Pass the io instance to the DM controller
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Added this for consistency
+app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/private_uploads', express.static(path.join(__dirname, 'private_uploads'))); // Added this for consistency
 

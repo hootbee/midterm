@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback } from 'react';
 
 const commentSectionStyle = {
   marginTop: '30px',
@@ -71,10 +71,10 @@ function CommentSection({ itemId }) {
     }
   };
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/auctions/${itemId}/comments`);
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}/comments`);
       if (!res.ok) {
         throw new Error('댓글을 불러오는 데 실패했습니다.');
       }
@@ -85,7 +85,7 @@ function CommentSection({ itemId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemId]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -95,7 +95,7 @@ function CommentSection({ itemId }) {
     if (itemId) {
       fetchComments();
     }
-  }, [itemId]);
+  }, [itemId, fetchComments]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -116,7 +116,7 @@ function CommentSection({ itemId }) {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}/comments`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ function CommentSection({ itemId }) {
     }
 
     try {
-      const res = await fetch(`/api/comments/${commentId}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

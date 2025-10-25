@@ -75,7 +75,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch('/api/favorites/toggle', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/favorites/toggle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ function AuctionItemDetail() {
     const fetchItem = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/auctions/${id}`);
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}`);
         if (!res.ok) throw new Error('아이템을 찾을 수 없습니다.');
         const data = await res.json();
         setItem(data);
@@ -126,7 +126,7 @@ function AuctionItemDetail() {
       if (!token) return;
 
       try {
-        const res = await fetch(`/api/favorites/status/${id}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/favorites/status/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -188,7 +188,7 @@ function AuctionItemDetail() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/auctions/${id}`, {
+const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -210,7 +210,7 @@ function AuctionItemDetail() {
   const handleDownload = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/auctions/${id}/download`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -249,7 +249,7 @@ function AuctionItemDetail() {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/auctions/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -275,8 +275,7 @@ function AuctionItemDetail() {
   const handleEndTimeUpdate = async () => {
     const token = localStorage.getItem('token');
     try {
-        const res = await fetch(`/api/auctions/${id}`,
-            {
+              const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -310,7 +309,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${id}/mark-${statusType}`,
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}/mark-${statusType}`,
         {
           method: 'PUT',
           headers: {
@@ -343,7 +342,7 @@ function AuctionItemDetail() {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${id}/cancel`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${id}/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -400,7 +399,7 @@ function AuctionItemDetail() {
     <div style={{...detailContainerStyle, border: item.sellerReputationScore >= 100 ? '2px solid red' : detailContainerStyle.border}}>
       {item.sellerReputationScore >= 100 && <div style={{position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'red', color: 'white', padding: '2px 5px', borderRadius: '3px', fontSize: '0.8em'}}>신용</div>}
       <h2>{item.title}</h2>
-      <img src={`/${item.imagePath}`} alt={item.title} style={imageStyle} />
+      <img src={`${process.env.REACT_APP_API_URL}/${item.imagePath}`} alt={item.title} style={imageStyle} />
 
       <div style={{ margin: '20px 0', whiteSpace: 'pre-wrap', border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
         {item.content}
@@ -522,7 +521,7 @@ const ReportForm = ({ itemId, onCancel }) => {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}/report`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

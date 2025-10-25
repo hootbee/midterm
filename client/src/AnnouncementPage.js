@@ -30,7 +30,7 @@ function AnnouncementPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const res = await fetch('/api/announcements', { headers });
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements`, { headers });
       if (!res.ok) {
         throw new Error('공지사항을 불러오는 데 실패했습니다.');
       }
@@ -59,7 +59,7 @@ function AnnouncementPage() {
     }
 
     try {
-      const res = await fetch('/api/announcements', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ function AnnouncementPage() {
     }
 
     try {
-      const res = await fetch(`/api/announcements/${editingAnnouncement._id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements/${editingAnnouncement._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ function AnnouncementPage() {
     }
 
     try {
-      const res = await fetch(`/api/announcements/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -139,7 +139,7 @@ function AnnouncementPage() {
 
   const handleToggleBanner = async (id) => {
     try {
-      const res = await fetch(`/api/announcements/${id}/toggle-banner`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements/${id}/toggle-banner`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

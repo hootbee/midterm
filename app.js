@@ -1,4 +1,5 @@
 // app.js (CommonJS)
+require('dotenv').config();
 const { spawn } = require("child_process");
 
 const procs = [];
@@ -41,4 +42,4 @@ run(
 );
 
 // 2) 클라이언트: CRA 개발 서버 ( client 디렉토리에서 실행 )
-run("client", "npm", ["start", "--prefix", "client"]);
+run("client", "npm", ["start", "--prefix", "client"], { env: { ...process.env, PORT: process.env.PORT_CLIENT } });

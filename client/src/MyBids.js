@@ -17,7 +17,7 @@ const MyBids = () => {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${item._id}/download`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${item._id}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -59,7 +59,7 @@ const MyBids = () => {
       if (!token) {
         throw new Error('No token found');
       }
-      const response = await fetch('/api/auctions/bids/me', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/bids/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -100,7 +100,7 @@ const MyBids = () => {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}/mark-${newStatus}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}/mark-${newStatus}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ const MyBids = () => {
     const auctionIds = items.map(item => item._id);
 
     try {
-      const res = await fetch('/api/auctions/hide-for-user', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/hide-for-user`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

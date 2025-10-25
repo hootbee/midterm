@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 
-const ENDPOINT = 'http://localhost:3001'; // Your backend server URL
+const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:3001'; // Your backend server URL
 
 function DMPage() {
   const [showNewChatInput, setShowNewChatInput] = useState(false);
@@ -37,7 +37,7 @@ function DMPage() {
     if (!contextMenuRoomId || !token) return;
 
     try {
-      const res = await fetch(`/api/dm/room/${contextMenuRoomId}/leave`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/dm/room/${contextMenuRoomId}/leave`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -113,7 +113,7 @@ function DMPage() {
     const fetchDMRooms = async () => {
       if (!token) return;
       try {
-        const res = await fetch('/api/dm/rooms', {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/dm/rooms`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -135,7 +135,7 @@ function DMPage() {
     const fetchMessages = async () => {
       if (!selectedRoom || !token) return;
       try {
-        const res = await fetch(`/api/dm/room/${selectedRoom._id}/messages`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/dm/room/${selectedRoom._id}/messages`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -166,7 +166,7 @@ function DMPage() {
     }
 
     try {
-      const res = await fetch('/api/dm/room', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/dm/room`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

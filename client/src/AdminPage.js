@@ -34,7 +34,7 @@ const AllUsers = () => {
         return;
       }
       try {
-        const res = await fetch(`/api/users?page=${currentPage}&limit=10`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users?page=${currentPage}&limit=10`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -129,7 +129,7 @@ const UserSearch = () => {
     }
 
     try {
-      const res = await fetch(`/api/users/search/${uuid}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/search/${uuid}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -163,7 +163,7 @@ const UserSearch = () => {
     }
 
     try {
-      const res = await fetch(`/api/users/${uuidToDelete}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${uuidToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -195,7 +195,7 @@ const UserSearch = () => {
     }
 
     try {
-      const res = await fetch(`/api/users/${userData.uuid}/reputation`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${userData.uuid}/reputation`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -270,7 +270,7 @@ const ReportedItems = () => {
     const fetchReportedItems = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('/api/auctions/reported', {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/reported`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (res.ok) {
@@ -289,7 +289,7 @@ const ReportedItems = () => {
       const fetchReports = async () => {
         const token = localStorage.getItem('token');
         try {
-          const res = await fetch(`/api/reports/${selectedItem._id}`, {
+          const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reports/${selectedItem._id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
           if (res.ok) {
@@ -316,7 +316,7 @@ const ReportedItems = () => {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}/reset-reports`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}/reset-reports`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -359,7 +359,7 @@ const ReportedItems = () => {
 
     try {
       // 1. Get current user data to find current reputation score
-      const userRes = await fetch(`/api/users/search/${sellerUuid}`, {
+      const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/users/search/${sellerUuid}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -374,7 +374,7 @@ const ReportedItems = () => {
       const newScore = currentScore - 50;
 
       // 2. Update the reputation score
-      const updateRes = await fetch(`/api/users/${sellerUuid}/reputation`, {
+      const updateRes = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${sellerUuid}/reputation`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -407,7 +407,7 @@ const ReportedItems = () => {
     }
 
     try {
-      const res = await fetch(`/api/reports/${itemId}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reports/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

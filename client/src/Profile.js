@@ -19,7 +19,7 @@ function Profile() {
       }
 
       try {
-        const res = await fetch('/api/users/me', {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -54,7 +54,7 @@ function Profile() {
     }
 
     try {
-      const res = await fetch('/api/users/profile', { // New endpoint
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile`, { // New endpoint
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ function Profile() {
     }
 
     try {
-      const res = await fetch('/api/users/balance', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/balance`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

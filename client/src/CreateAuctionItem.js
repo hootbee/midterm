@@ -44,7 +44,7 @@ function CreateAuctionItem() {
     formData.append('endTime', new Date(endTime).toISOString());
 
     try {
-      const res = await fetch('/api/auctions', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

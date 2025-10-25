@@ -37,12 +37,12 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
 
   useEffect(() => {
     const fetchItems = async () => {
+      try {
       const searchTerm = searchParams.get('search');
       const searchType = searchParams.get('type');
       const token = localStorage.getItem('token');
       
-      try {
-        let url = `/api/auctions?page=${currentPage}&limit=5`;
+let url = `${process.env.REACT_APP_API_URL}/api/auctions?page=${currentPage}&limit=5`;
         if (searchTerm && searchType) {
           url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
         }
@@ -76,7 +76,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
     }
 
     try {
-      const res = await fetch(`/api/auctions/${itemId}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -136,7 +136,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
 
     try {
       for (const itemId of selectedItems) {
-        const res = await fetch(`/api/auctions/${itemId}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/${itemId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -157,7 +157,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
         // Re-fetch items to update the list
         const searchTerm = searchParams.get('search');
         const searchType = searchParams.get('type');
-        let url = `/api/auctions?page=${currentPage}&limit=5`;
+        let url = `${process.env.REACT_APP_API_URL}/api/auctions?page=${currentPage}&limit=5`;
 
         if (searchTerm && searchType) {
           url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
@@ -265,7 +265,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                     to={`/auction/${item._id}`}
                     style={{textDecoration: 'none', color: 'inherit', flexGrow: 1, display: 'flex', gap: '16px'}}
                 >
-                  <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailStyle}/>
+                  <img src={`${process.env.REACT_APP_API_URL}/${item.imagePath}`} alt={item.title} style={thumbnailStyle}/>
                   <div>
                     <h3>{item.title}</h3>
                     <p>판매자 평판: {item.sellerReputationScore}점</p>
@@ -346,7 +346,7 @@ function Home() {
     // Fetch banner announcement
     const fetchBanner = async () => {
       try {
-        const res = await fetch('/api/announcements/banner');
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/announcements/banner`);
         if (res.ok) {
           const data = await res.json();
           setBannerAnnouncement(data);

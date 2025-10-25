@@ -16,7 +16,7 @@ const MySelling = () => {
       if (!token) {
         throw new Error('No token found');
       }
-      const response = await fetch('/api/auctions/selling/me', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/selling/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -69,7 +69,7 @@ const MySelling = () => {
     }
 
     try {
-      const res = await fetch('/api/auctions/hide-for-seller', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auctions/hide-for-seller`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
