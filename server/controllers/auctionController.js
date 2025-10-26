@@ -605,9 +605,26 @@ const hideAuctionsForSeller = async (req, res) => {
   }
 };
 
+const getAuctionItemsByIds = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: 'IDs must be an array.' });
+    }
+
+    const items = await AuctionItem.find({ '_id': { $in: ids } });
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching items by IDs:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
+  getAuctionItemsByIds,
   getAuctionItemById,
   downloadItemFile,
   deleteAuctionItem,

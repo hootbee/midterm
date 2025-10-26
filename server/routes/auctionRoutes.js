@@ -143,7 +143,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, extendAuctionEndTime, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemsByIds, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, extendAuctionEndTime, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
@@ -296,6 +296,42 @@ router.put('/hide-for-seller', authMiddleware, hideAuctionsForSeller);
  */
 router.get('/', optionalAuthMiddleware, getAuctionItems);
 router.post('/', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'itemFile', maxCount: 1 }]), createAuctionItem);
+
+/**
+ * @swagger
+ * /api/auctions/by-ids:
+ *   post:
+ *     summary: Get multiple auction items by their IDs
+ *     tags: [Auctions]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ids
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: An array of auction item IDs to fetch
+ *     responses:
+ *       200:
+ *         description: A list of auction items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/AuctionItem'
+ *       400:
+ *         description: Invalid input, IDs must be an array
+ *       500:
+ *         description: Server error
+ */
+router.post('/by-ids', getAuctionItemsByIds);
 
 /**
  * @swagger

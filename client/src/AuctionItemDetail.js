@@ -137,8 +137,23 @@ function AuctionItemDetail() {
   };
 
   useEffect(() => {
+    const updateRecentlyViewed = (itemId) => {
+      const MAX_ITEMS = 5;
+      let recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      // Remove the item if it already exists to move it to the front
+      recentlyViewed = recentlyViewed.filter(i => i !== itemId);
+      // Add the new item to the front
+      recentlyViewed.unshift(itemId);
+      // Trim the list if it's too long
+      if (recentlyViewed.length > MAX_ITEMS) {
+        recentlyViewed.pop();
+      }
+      localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
+    };
+
     fetchItem();
     fetchFavoriteStatus();
+    updateRecentlyViewed(id);
   }, [id]);
 
   /* ===================== Socket 설정 ===================== */

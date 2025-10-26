@@ -103,7 +103,7 @@ function initializeSocket(io) {
         const now = new Date();
         const endTime = new Date(item.endTime);
         if (endTime.getTime() - now.getTime() < 60000) { // Less than 1 minute
-          item.endTime = new Date(now.getTime() + 60000); // Extend by 1 minute
+          item.endTime = new Date(endTime.getTime() + 60000); // Extend by 1 minute from the original end time
           console.log(`Auction time extended for item ${itemId}`);
         }
 

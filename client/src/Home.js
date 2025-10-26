@@ -684,31 +684,24 @@ function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userUuid, setUserUuid] = useState(null);
+  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true); // State for banner visibility
+  const [bannerAnnouncement, setBannerAnnouncement] = useState(null); // State for fetched banner content
 
-  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true);
-  const [bannerAnnouncement, setBannerAnnouncement] = useState(null);
-
-  // 토큰 decode
   const decodeToken = (token) => {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-          atob(base64)
-              .split('')
-              .map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-              })
-              .join('')
-      );
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
       return JSON.parse(jsonPayload);
-    } catch {
+    } catch (e) {
       return null;
     }
   };
 
   useEffect(() => {
-    // 로그인 상태 / 유저정보
     const token = localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
@@ -721,7 +714,7 @@ function Home() {
       }
     }
 
-    // 배너 공지 가져오기
+    // Fetch banner announcement
     const fetchBanner = async () => {
       try {
         const res = await fetch('/api/announcements/banner');
@@ -729,17 +722,17 @@ function Home() {
           const data = await res.json();
           setBannerAnnouncement(data);
         } else if (res.status === 404) {
-          setBannerAnnouncement(null);
+          setBannerAnnouncement(null); // No banner active
         } else {
           throw new Error('배너 공지사항을 불러오는 데 실패했습니다.');
         }
       } catch (err) {
         console.error('Error fetching banner announcement:', err);
-        setBannerAnnouncement(null);
+        setBannerAnnouncement(null); // Ensure banner is hidden on error
       }
     };
-
     fetchBanner();
+
   }, []);
 
   const handleLogout = () => {
@@ -751,76 +744,227 @@ function Home() {
   };
 
   return (
-      <div style={pageWrapperStyle}>
-        {/* 배너 공지 */}
+    <div style={{ display: 'flex' }}>
+      <div style={{ flex: 1 }}>
         {showAnnouncementBanner && bannerAnnouncement && (
-            <div style={bannerStyle}>
-              <div style={{ fontWeight: 500 }}>
-                ✨ {bannerAnnouncement.title}
-              </div>
-              <button
-                  onClick={() => setShowAnnouncementBanner(false)}
-                  style={bannerCloseBtn}
-              >
-                &times;
-              </button>
-            </div>
-        )}
-
-        {/* 상단 헤더 바 */}
-        <header style={headerBarStyle}>
-          <div style={headerLeftCol}>
-            <h1 style={headerTitleStyle}>메인 화면</h1>
-            {isLoggedIn && userUuid && (
-                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', wordBreak: 'break-all' }}>
-                  현재 사용자 UUID: {userUuid}
-                </div>
-            )}
-          </div>
-
-          <div style={headerRightCol}>
-            {isLoggedIn ? (
-                <>
-                  <button onClick={handleLogout} style={buttonBase}>
-                    로그아웃
-                  </button>
-
-                  <Link to="/profile">
-                    <button style={buttonBase}>개인 프로필가기</button>
-                  </Link>
-
-                  <Link to="/my-bids">
-                    <button style={buttonBase}>입찰 내역</button>
-                  </Link>
-
-                  <Link to="/my-selling">
-                    <button style={buttonBase}>판매 내역</button>
-                  </Link>
-
-                  {isAdmin && (
-                      <Link to="/admin">
-                        <button style={buttonPrimary}>관리자 페이지</button>
-                      </Link>
-                  )}
-                </>
-            ) : (
-                <>
-                  <Link to="/login">
-                    <button style={buttonPrimary}>로그인</button>
-                  </Link>
-
-                  <Link to="/signup">
-                    <button style={buttonBase}>회원가입</button>
-                  </Link>
-                </>
-            )}
-          </div>
-        </header>
-
-        {/* 경매 리스트 섹션 */}
-        <ItemList isLoggedIn={isLoggedIn} isAdmin={isAdmin} userUuid={userUuid} />
+            <div style={{
+              backgroundColor: '#fff3cd',
+              color: '#856404',
+              padding: '10px',
+              marginBottom: '20px',
+              border: '1px solid #ffeeba',
+              borderRadius: '5px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span>✨ {bannerAnnouncement.title}</span>
+          <button
+            onClick={() => setShowAnnouncementBanner(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.2em',
+              cursor: 'pointer',
+              color: '#856404',
+            }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+      <h1>메인 화면</h1>
+      {isLoggedIn ? (
+        <>
+          <button onClick={handleLogout}>로그아웃</button>
+          <Link to="/profile"><button style={{ marginLeft: '10px' }}>개인 프로필가기</button></Link>
+          <Link to="/my-bids"><button style={{ marginLeft: '10px' }}>입찰 내역</button></Link>
+          <Link to="/my-selling"><button style={{ marginLeft: '10px' }}>판매 내역</button></Link> {/* New link for My Selling */}
+          {isAdmin && (
+            <Link to="/admin"><button style={{ marginLeft: '10px' }}>관리자 페이지</button></Link>
+          )}
+        </>
+      ) : (
+        <>
+          <Link to="/login"><button>로그인</button></Link>
+          <Link to="/signup"><button style={{ marginLeft: '10px' }}>회원가입</button></Link>
+        </>
+      )}
+      <ItemList isLoggedIn={isLoggedIn} isAdmin={isAdmin} userUuid={userUuid} />
       </div>
+      <RecentlyViewedItems />
+    </div>
   );
 }
 
+const RecentlyViewedItems = () => {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const fetchRecentlyViewed = async () => {
+      const viewedIds = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      if (viewedIds.length === 0) return;
+
+      try {
+        const res = await fetch('/api/auctions/by-ids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: viewedIds }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const orderedData = viewedIds
+              .map(id => data.find(item => item._id === id))
+              .filter(Boolean);
+          setItems(orderedData);
+        } else {
+          console.error('Failed to fetch recently viewed items');
+        }
+      } catch (error) {
+        console.error('Error fetching recently viewed items:', error);
+      }
+    };
+
+    fetchRecentlyViewed();
+  }, []);
+
+  if (items.length === 0) return null;
+
+  return (
+      <div
+          style={{
+            width: '260px',
+            marginLeft: '24px',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+            height: 'fit-content',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            position: 'sticky',
+            top: '20px',
+          }}
+      >
+        <h3
+            style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#111827',
+              margin: '0 0 12px 0',
+              borderBottom: '1px solid #f3f4f6',
+              paddingBottom: '8px',
+            }}
+        >
+          👀 최근 본 경매
+        </h3>
+
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {items.map((item) => (
+              <li
+                  key={item._id}
+                  style={{
+                    marginBottom: '12px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid #f3f4f6',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  }}
+              >
+                <Link
+                    to={`/auction/${item._id}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      backgroundColor: '#fafafa',
+                      transition: 'background-color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = '#f1f5f9')
+                    }
+                    onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = '#fafafa')
+                    }
+                >
+                  <div
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        flexShrink: 0,
+                        borderRight: '1px solid #e5e7eb',
+                        overflow: 'hidden',
+                      }}
+                  >
+                    {item.imagePath ? (
+                        <img
+                            src={`/${item.imagePath}`}
+                            alt={item.title}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                        />
+                    ) : (
+                        <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              backgroundColor: '#f3f4f6',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11px',
+                              color: '#9ca3af',
+                            }}
+                        >
+                          No Img
+                        </div>
+                    )}
+                  </div>
+
+                  <div
+                      style={{
+                        flexGrow: 1,
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        minWidth: 0,
+                      }}
+                  >
+                    <p
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: '#111827',
+                          margin: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={item.title}
+                    >
+                      {item.title}
+                    </p>
+                    <p
+                        style={{
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          margin: '4px 0 0 0',
+                        }}
+                    >
+                      ₩{Number(item.startPrice).toLocaleString()}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+          ))}
+        </ul>
+      </div>
+  );
+};
 export default Home;
