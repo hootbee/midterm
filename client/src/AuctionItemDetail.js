@@ -5,569 +5,470 @@ import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
 import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
-const detailContainerStyle = {
-  position: 'relative',
-  padding: '20px',
-  maxWidth: '800px',
-  margin: 'auto',
+/* ===================== 공통 스타일 ===================== */
+const styles = {
+  container: {
+    position: 'relative',
+    padding: '20px',
+    maxWidth: '800px',
+    margin: 'auto',
+  },
+  image: {
+    maxWidth: '100%',
+    maxHeight: '500px',
+    borderRadius: '8px',
+  },
+  biddingCard: {
+    border: '1px solid #007bff',
+    borderRadius: '8px',
+    padding: '20px',
+    marginTop: '20px',
+    backgroundColor: '#f8f9fa',
+  },
+  button: {
+    border: 'none',
+    padding: '10px 15px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
 };
 
-const imageStyle = {
-  maxWidth: '100%',
-  maxHeight: '500px',
-  borderRadius: '8px',
+/* ===================== 공통 Fetch Wrapper ===================== */
+const authorizedFetch = async (url, options = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const res = await fetch(buildApiUrl(url), { ...options, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '요청 실패');
+  return data;
 };
 
-const biddingCardStyle = {
-  border: '1px solid #007bff',
-  borderRadius: '8px',
-  padding: '20px',
-  marginTop: '20px',
-  backgroundColor: '#f8f9fa',
-};
-
+/* ===================== Countdown 컴포넌트 ===================== */
 const Countdown = ({ endTime }) => {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      const end = new Date(endTime);
-      const difference = end - now;
-
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((difference / 1000 / 60) % 60);
-        const seconds = Math.floor((difference / 1000) % 60);
-        setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      const diff = new Date(endTime) - new Date();
+      if (diff > 0) {
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / 1000 / 60) % 60);
+        const s = Math.floor((diff / 1000) % 60);
+        setTimeLeft(`${d}d ${h}h ${m}m ${s}s`);
       } else {
         setTimeLeft('경매 종료');
         clearInterval(interval);
       }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [endTime]);
 
   return <span>{timeLeft}</span>;
 };
 
+/* ===================== 메인 컴포넌트 ===================== */
 function AuctionItemDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const socketRef = useRef(null);
+  const itemRef = useRef(null);
+
   const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showReportForm, setShowReportForm] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [timeExtended, setTimeExtended] = useState(false);
-  const { id } = useParams();
-  const socketRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Function to toggle favorite status
-  const handleToggleFavorite = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    try {
-      const res = await fetch(buildApiUrl('/api/favorites/toggle'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ auctionItemId: id }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setIsFavorited(data.favorited);
-        alert(data.message);
-      } else {
-        const data = await res.json();
-        throw new Error(data.message || '즐겨찾기 상태 변경 실패');
-      }
-    } catch (err) {
-      alert(`즐겨찾기 오류: ${err.message}`);
-    }
-  };
-
-  const itemRef = useRef(item);
-  useEffect(() => {
-    itemRef.current = item;
-  }, [item]);
-
-  useEffect(() => {
-    const fetchItem = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(buildApiUrl(`/api/auctions/${id}`));
-        if (!res.ok) throw new Error('아이템을 찾을 수 없습니다.');
-        const data = await res.json();
-        setItem(data);
-        setBidAmount(data.currentPrice + 1);
-        if (data.endTime) {
-          setNewEndTime(new Date(data.endTime).toISOString().slice(0, 16));
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchFavoriteStatus = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        const res = await fetch(buildApiUrl(`/api/favorites/status/${id}`), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setIsFavorited(data.isFavorited);
-        } else if (res.status === 401) {
-          setIsFavorited(false);
-        } else {
-          throw new Error('즐겨찾기 상태를 불러오는 데 실패했습니다.');
-        }
-      } catch (err) {
-        console.error('Error fetching favorite status:', err);
-        setIsFavorited(false);
-      }
-    };
-
-    fetchItem();
-    fetchFavoriteStatus();
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      socketRef.current = io(SOCKET_ENDPOINT, { auth: { token } });
-      const socket = socketRef.current;
-      socket.on('connect', () => {
-        console.log('Socket connected!');
-        socket.emit('join_room', id);
-      });
-      socket.on('bid_update', (updatedItem) => {
-        console.log('Received bid update:', updatedItem);
-        if (itemRef.current && new Date(updatedItem.endTime) > new Date(itemRef.current.endTime)) {
-          setTimeExtended(true);
-          setTimeout(() => setTimeExtended(false), 3000);
-        }
-        setItem(updatedItem);
-      });
-      socket.on('bid_error', (error) => {
-        alert(`입찰 오류: ${error.message}`);
-      });
-      return () => {
-        console.log('Disconnecting socket...');
-        socket.disconnect();
-      };
-    }
-  }, [id]);
-
-  const handleBidSubmit = (e) => {
-    e.preventDefault();
-    if (socketRef.current) {
-      socketRef.current.emit('new_bid', { itemId: id, bidAmount: Number(bidAmount) });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm('정말로 이 경매를 삭제하시겠습니까?')) {
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${id}`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        alert('경매가 삭제되었습니다.');
-        navigate('/');
-      } else {
-        const data = await res.json();
-        throw new Error(data.message || '삭제에 실패했습니다.');
-      }
-    } catch (err) {
-      alert(`삭제 오류: ${err.message}`);
-    }
-  };
-
-  const handleDownload = async () => {
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${id}/download`), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || '다운로드에 실패했습니다.');
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      const disposition = res.headers.get('content-disposition');
-      let filename = item.filePath.split('-').pop();
-      if (disposition && disposition.includes('attachment')) {
-        const filenameRegex = /filename[^;=\\n]*=\s*(?:(['"])(.*?)\1|([^;\\n]*))/;
-        const matches = filenameRegex.exec(disposition);
-
-        if (matches) {
-          filename = (matches[2] || matches[3]).trim();
-          filename = filename.replace(/['"]/g, '');
-        }
-      }
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      alert(`다운로드 오류: ${err.message}`);
-    }
-  };
-
-  const handleUpdate = async (e, updatedData) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${id}`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedData),
-      });
-
-      if (res.ok) {
-        const updatedItem = await res.json();
-        setItem(updatedItem);
-        setIsEditMode(false);
-        alert('경매 정보가 수정되었습니다.');
-      } else {
-        const data = await res.json();
-        throw new Error(data.message || '수정에 실패했습니다.');
-      }
-    } catch (err) {
-      alert(`수정 오류: ${err.message}`);
-    }
-  };
-
-  const handleEndTimeUpdate = async () => {
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(buildApiUrl(`/api/auctions/${id}`),
-            {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ endTime: newEndTime }),
-            });
-
-        if (res.ok) {
-            const updatedItem = await res.json();
-            setItem(updatedItem);
-            alert('마감 시간이 수정되었습니다.');
-        } else {
-            const data = await res.json();
-            throw new Error(data.message || '수정에 실패했습니다.');
-        }
-    } catch (err) {
-        alert(`수정 오류: ${err.message}`);
-    }
-  };
-
-  const handleUpdateTransactionStatus = async (statusType) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    if (!window.confirm(`정말로 ${statusType} 처리하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${id}/mark-${statusType}`),
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-      if (res.ok) {
-        const updatedItem = await res.json();
-        setItem(updatedItem);
-        alert(`${statusType} 처리되었습니다.`);
-      } else {
-        const data = await res.json();
-        throw new Error(data.message || `${statusType} 처리 실패`);
-      }
-    } catch (err) {
-      alert(`${statusType} 처리 오류: ${err.message}`);
-    }
-  };
-
-  const handleCancelAuction = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    if (!window.confirm('정말로 경매를 취소하시겠습니까?')) {
-      return;
-    }
-
-    try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${id}/cancel`), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        const updatedItem = await res.json();
-        setItem(updatedItem);
-        alert('경매가 취소되었습니다.');
-      } else {
-        const data = await res.json();
-        throw new Error(data.message || '경매 취소 실패');
-      }
-    } catch (err) {
-      alert(`경매 취소 오류: ${err.message}`);
-    }
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!item) return <div>Item not found.</div>;
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [error, setError] = useState(null);
 
   const token = localStorage.getItem('token');
   let currentUserUuid = null;
   if (token) {
     try {
-      const decodedToken = jwtDecode(token);
-      currentUserUuid = decodedToken.uuid;
-    } catch (e) {
-      console.error("Invalid token");
-    }
+      currentUserUuid = jwtDecode(token).uuid;
+    } catch {}
   }
+
+  const fetchItem = async () => {
+    try {
+      setLoading(true);
+      const data = await authorizedFetch(`/api/auctions/${id}`, { method: 'GET' });
+      setItem(data);
+      setBidAmount(data.currentPrice + 1);
+      if (data.endTime) setNewEndTime(new Date(data.endTime).toISOString().slice(0, 16));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFavoriteStatus = async () => {
+    if (!token) return;
+    try {
+      const data = await authorizedFetch(`/api/favorites/status/${id}`);
+      setIsFavorited(data.isFavorited);
+    } catch {
+      setIsFavorited(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchItem();
+    fetchFavoriteStatus();
+  }, [id]);
+
+  /* ===================== Socket 설정 ===================== */
+  useEffect(() => {
+    if (!token) return;
+    const socket = io(SOCKET_ENDPOINT, { auth: { token } });
+    socketRef.current = socket;
+    socket.emit('join_room', id);
+    socket.on('bid_update', (updatedItem) => {
+      if (itemRef.current && new Date(updatedItem.endTime) > new Date(itemRef.current.endTime)) {
+        setTimeExtended(true);
+        setTimeout(() => setTimeExtended(false), 3000);
+      }
+      setItem(updatedItem);
+    });
+    socket.on('bid_error', (err) => alert(`입찰 오류: ${err.message}`));
+    return () => socket.disconnect();
+  }, [id, token]);
+
+  useEffect(() => {
+    itemRef.current = item;
+  }, [item]);
+
+  /* ===================== 주요 기능 핸들러 ===================== */
+  const handleBid = (e) => {
+    e.preventDefault();
+    socketRef.current?.emit('new_bid', { itemId: id, bidAmount: Number(bidAmount) });
+  };
+
+  const handleFavorite = async () => {
+    if (!token) return alert('로그인이 필요합니다.');
+    try {
+      const data = await authorizedFetch('/api/favorites/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ auctionItemId: id }),
+      });
+      setIsFavorited(data.favorited);
+      alert(data.message);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    try {
+      await authorizedFetch(`/api/auctions/${id}`, { method: 'DELETE' });
+      alert('삭제 완료');
+      navigate('/');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdate = async (e, updatedData) => {
+    e.preventDefault();
+    try {
+      const updated = await authorizedFetch(`/api/auctions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedData),
+      });
+      setItem(updated);
+      setIsEditMode(false);
+      alert('수정 완료');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleEndTimeUpdate = async () => {
+    try {
+      const updated = await authorizedFetch(`/api/auctions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ endTime: newEndTime }),
+      });
+      setItem(updated);
+      alert('마감 시간 수정 완료');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(buildApiUrl(`/api/auctions/${id}/download`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('다운로드 실패');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = item.filePath.split('-').pop();
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`다운로드 오류: ${err.message}`);
+    }
+  };
+
+  /* ===================== 렌더링 조건 계산 ===================== */
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error}</div>;
+  if (!item) return <div>아이템을 찾을 수 없습니다.</div>;
 
   const isSeller = item.sellerUuid === currentUserUuid;
   const isAuctionOver = new Date() > new Date(item.endTime);
   const isWinner = item.winnerUuid === currentUserUuid;
   const canBid = token && item.status === 'active' && !isSeller && !isAuctionOver;
 
-  let transactionStatusText = '-';
-  switch (item.transactionStatus) {
-    case 'none': transactionStatusText = '거래 전'; break;
-    case 'pending_payment': transactionStatusText = '결제 대기 중'; break;
-    case 'paid': transactionStatusText = '결제 완료'; break;
-    case 'completed': transactionStatusText = '거래 완료'; break;
-    default: break;
-  }
-
-  if (isEditMode) {
+  /* ===================== UI ===================== */
+  if (isEditMode)
     return <EditForm item={item} onUpdate={handleUpdate} onCancel={() => setIsEditMode(false)} />;
-  }
 
   return (
-    <div style={{...detailContainerStyle, border: item.sellerReputationScore >= 100 ? '2px solid red' : detailContainerStyle.border}}>
-      {item.sellerReputationScore >= 100 && <div style={{position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'red', color: 'white', padding: '2px 5px', borderRadius: '3px', fontSize: '0.8em'}}>신용</div>}
-      <h2>{item.title}</h2>
-      <img src={`/${item.imagePath}`} alt={item.title} style={imageStyle} />
+      <div
+          style={{
+            ...styles.container,
+            border: item.sellerReputationScore >= 100 ? '2px solid red' : undefined,
+          }}
+      >
+        {/* 신용 배지 */}
+        {item.sellerReputationScore >= 100 && (
+            <div
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  left: '10px',
+                  backgroundColor: 'red',
+                  color: 'white',
+                  padding: '2px 5px',
+                  borderRadius: '3px',
+                  fontSize: '0.8em',
+                }}
+            >
+              신용
+            </div>
+        )}
 
-      <div style={{ margin: '20px 0', whiteSpace: 'pre-wrap', border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
-        {item.content}
-      </div>
+        <h2>{item.title}</h2>
+        <img src={`/${item.imagePath}`} alt={item.title} style={styles.image} />
+        <div
+            style={{
+              margin: '20px 0',
+              whiteSpace: 'pre-wrap',
+              border: '1px solid #eee',
+              padding: '15px',
+              borderRadius: '5px',
+            }}
+        >
+          {item.content}
+        </div>
 
-      <p><strong>판매자 UUID:</strong> {item.sellerUuid}</p>
-      <p><strong>판매자 평판:</strong> {item.sellerReputationScore}점</p>
-      <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
-      <p><strong>마감 시간:</strong> {new Date(item.endTime).toLocaleString()}</p>
-      <p><strong>남은 시간:</strong> <Countdown endTime={item.endTime} /></p>
-      {timeExtended && <p style={{color: 'red', fontWeight: 'bold'}}>마감 시간이 1분 연장되었습니다!</p>}
-      <p><strong>경매 상태:</strong> {item.status === 'active' ? '진행 중' : item.status === 'ended' ? '마감됨' : item.status === 'sold' ? '판매됨' : '취소됨'}</p>
-      {item.status !== 'active' && item.winnerUuid && <p><strong>낙찰자 UUID:</strong> {item.winnerUuid}</p>}
-      {item.status !== 'active' && item.winnerUuid && <p><strong>거래 상태:</strong> {transactionStatusText}</p>}
-      {token && (
-        <button onClick={handleToggleFavorite} style={{ marginTop: '10px', backgroundColor: isFavorited ? '#ffc107' : '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
-          {isFavorited ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
+        <p>판매자 UUID: {item.sellerUuid}</p>
+        <p>판매자 평판: {item.sellerReputationScore}점</p>
+        <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
+        <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
+        <p>남은 시간: <Countdown endTime={item.endTime} /></p>
+        {timeExtended && <p style={{ color: 'red' }}>⏱ 마감 시간이 연장되었습니다!</p>}
+        <p>상태: {item.status}</p>
+
+        {token && (
+            <button
+                onClick={handleFavorite}
+                style={{
+                  ...styles.button,
+                  backgroundColor: isFavorited ? '#ffc107' : '#007bff',
+                  color: '#fff',
+                  marginTop: '10px',
+                }}
+            >
+              {isFavorited ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
+            </button>
+        )}
+
+        {/* 입찰 섹션 */}
+        {canBid && (
+            <div
+                style={{
+                  ...styles.biddingCard,
+                  backgroundColor: '#e8f4ff', // 💡 밝은 하늘색 배경
+                  border: '2px solid #007bff',
+                  color: '#000',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                }}
+            >
+              <h4
+                  style={{
+                    color: '#007bff',         // 💙 메인 포인트 컬러
+                    fontWeight: 700,
+                    fontSize: '1.2rem',
+                    marginBottom: '15px',
+                  }}
+              >
+                💰 입찰하기
+              </h4>
+              <form onSubmit={handleBid}>
+                <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    min={item.currentPrice + 1}
+                    required
+                    style={{
+                      width: '150px',
+                      padding: '8px',
+                      border: '1px solid #007bff',
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                    }}
+                />
+                <button
+                    type="submit"
+                    style={{
+                      marginLeft: '10px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 15px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                >
+                  입찰
+                </button>
+              </form>
+            </div>
+        )}
+
+        {/* 판매자 전용 */}
+        {isSeller && (
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={() => setIsEditMode(true)}>수정하기</button>
+              <button
+                  onClick={handleDelete}
+                  style={{ ...styles.button, backgroundColor: '#dc3545', color: '#fff', marginLeft: '10px' }}
+              >
+                삭제하기
+              </button>
+              <div style={{ marginTop: '10px' }}>
+                <label>마감 시간 수정:</label>
+                <input
+                    type="datetime-local"
+                    value={newEndTime}
+                    onChange={(e) => setNewEndTime(e.target.value)}
+                />
+                <button onClick={handleEndTimeUpdate} style={{ marginLeft: '10px' }}>
+                  수정
+                </button>
+              </div>
+            </div>
+        )}
+
+        {/* 다운로드 */}
+        {isWinner && item.transactionStatus === 'completed' && (
+            <div style={{
+              ...styles.biddingCard,
+              backgroundColor: '#e8f4ff', // 💡 더 밝은 파란 배경
+              border: '2px solid #007bff',
+              color: '#000',              // ✅ 진한 글자색
+            }}>
+              <h4 style={{ color: '#007bff', fontWeight: 700 }}>
+                🎉 최종 낙찰자입니다!
+              </h4>
+              <button
+                  onClick={handleDownload}
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#007bff',
+                    color: '#fff',
+                    fontWeight: 600
+                  }}
+              >
+                족보 다운로드
+              </button>
+            </div>
+        )}
+
+        {/* 신고 */}
+        <button onClick={() => setShowReportForm(true)} style={{ marginTop: '10px' }}>
+          신고하기
         </button>
-      )}
+        {showReportForm && <ReportForm itemId={item._id} onCancel={() => setShowReportForm(false)} />}
 
-      {/* Transaction Management Buttons */}
-      {item.status === 'ended' && item.winnerUuid && item.transactionStatus !== 'completed' && (
-        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-          {isWinner && item.transactionStatus === 'pending_payment' && (
-            <button onClick={() => handleUpdateTransactionStatus('paid')} style={{ marginRight: '10px' }}>결제 완료</button>
-          )}
-          {isWinner && item.transactionStatus === 'paid' && (
-            <button onClick={() => handleUpdateTransactionStatus('completed')} style={{ marginRight: '10px' }}>거래 완료</button>
-          )}
+        {/* 입찰 내역 */}
+        <div style={{ marginTop: '20px' }}>
+          <h4>입찰 내역</h4>
+          <ul>
+            {item.bids.slice().reverse().map((b, i) => (
+                <li key={i}>
+                  {new Date(b.timestamp).toLocaleString()}: {b.amount.toLocaleString()}원 (
+                  {b.bidderUuid.substring(0, 8)}…)
+                </li>
+            ))}
+          </ul>
         </div>
-      )}
 
-      {/* Cancel Auction Button */}
-      {isSeller && item.status === 'active' && (
-        <button onClick={handleCancelAuction} style={{ marginTop: '10px', backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
-          경매 취소
-        </button>
-      )}
-      {isSeller && item.status === 'active' && !isAuctionOver && (
-        <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
-            <label>마감 시간 수정: </label>
-            <input
-                type="datetime-local"
-                value={newEndTime}
-                onChange={(e) => setNewEndTime(e.target.value)}
-            />
-            <button onClick={handleEndTimeUpdate} style={{ marginLeft: '10px' }}>수정</button>
-        </div>
-      )}
-      <p><strong>등록일:</strong> {new Date(item.createdAt).toLocaleString()}</p>
-
-      {isWinner && item.transactionStatus === 'completed' && (
-        <div style={biddingCardStyle}>
-          <h4>경매 종료! 최종 낙찰자입니다.</h4>
-          <button onClick={handleDownload}>족보 다운로드</button>
-        </div>
-      )}
-
-      {canBid && (
-        <div style={biddingCardStyle}>
-          <h4>입찰하기</h4>
-          <form onSubmit={handleBidSubmit}>
-            <input 
-              type="number"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              min={item.currentPrice + 1}
-              required
-            />
-            <button type="submit" style={{ marginLeft: '10px' }}>입찰</button>
-          </form>
-        </div>
-      )}
-
-      {isSeller && (
-        <div>
-          <p>자신이 등록한 물품입니다.</p>
-          <button onClick={() => setIsEditMode(true)}>수정하기</button>
-          <button onClick={handleDelete} style={{ backgroundColor: 'red', color: 'white', marginLeft: '10px' }}>삭제하기</button>
-        </div>
-      )}
-
-      <button onClick={() => setShowReportForm(true)} style={{ marginTop: '10px' }}>신고하기</button>
-
-      {showReportForm && <ReportForm itemId={item._id} onCancel={() => setShowReportForm(false)} />}
-
-      {!token && <p>로그인 후 입찰에 참여할 수 있습니다.</p>}
-      {item.status !== 'active' && !isWinner && <p>경매가 종료되거나 취소되었습니다.</p>}
-
-      <div>
-        <h4>입찰 내역</h4>
-        <ul>
-          {item.bids.slice().reverse().map((bid, index) => (
-            <li key={index}>
-              {new Date(bid.timestamp).toLocaleString()}: {bid.amount.toLocaleString()}원 (입찰자: {bid.bidderUuid.substring(0, 8)}...)
-            </li>
-          ))}
-        </ul>
+        <CommentSection itemId={id} />
       </div>
-      <CommentSection itemId={id} />
-    </div>
   );
 }
 
+/* ===================== 신고폼 ===================== */
 const ReportForm = ({ itemId, onCancel }) => {
   const [reason, setReason] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!reason) {
-      alert('신고 사유를 선택해주세요.');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
+    if (!reason) return alert('신고 사유를 선택하세요.');
     try {
-      const res = await fetch(buildApiUrl(`/api/auctions/${itemId}/report`), {
+      await authorizedFetch(`/api/auctions/${itemId}/report`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({ reason }),
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert(data.message);
-        onCancel(); // Close the form
-      } else {
-        throw new Error(data.message);
-      }
+      alert('신고가 접수되었습니다.');
+      onCancel();
     } catch (err) {
-      alert(`신고 접수 오류: ${err.message}`);
+      alert(err.message);
     }
   };
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: '15px', marginTop: '20px' }}>
-      <h4>게시물 신고</h4>
-      <form onSubmit={handleSubmit}>
-        <div>
+      <div style={{ border: '1px solid #ccc', padding: '15px', marginTop: '20px' }}>
+        <h4>게시물 신고</h4>
+        <form onSubmit={handleSubmit}>
           <label>
-            <input 
-              type="checkbox" 
-              checked={reason === '허위 게시물'}
-              onChange={() => setReason(prev => prev === '허위 게시물' ? '' : '허위 게시물')}
+            <input
+                type="checkbox"
+                checked={reason === '허위 게시물'}
+                onChange={() => setReason(reason === '허위 게시물' ? '' : '허위 게시물')}
             />
             허위 게시물
           </label>
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <button type="submit">신고 접수</button>
-          <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>취소</button>
-        </div>
-      </form>
-    </div>
+          <div style={{ marginTop: '10px' }}>
+            <button type="submit">신고 접수</button>
+            <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>
+              취소
+            </button>
+          </div>
+        </form>
+      </div>
   );
 };
 
+/* ===================== 수정 폼 ===================== */
 const EditForm = ({ item, onUpdate, onCancel }) => {
   const [formData, setFormData] = useState({
     title: item.title,
@@ -576,36 +477,36 @@ const EditForm = ({ item, onUpdate, onCancel }) => {
     endTime: new Date(item.endTime).toISOString().slice(0, 16),
   });
 
-  const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>경매 정보 수정</h2>
-      <form onSubmit={(e) => onUpdate(e, formData)}>
-        <div>
-          <label>제목: </label>
-          <input type="text" name="title" value={formData.title} onChange={onChange} required />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>내용: </label>
-          <textarea name="content" value={formData.content} onChange={onChange} required style={{ width: '100%', minHeight: '200px' }} />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>경매 시작가: </label>
-          <input type="number" name="startPrice" value={formData.startPrice} onChange={onChange} required />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>마감 시간: </label>
-          <input type="datetime-local" name="endTime" value={formData.endTime} onChange={onChange} required />
-        </div>
-        <div style={{ marginTop: '20px' }}>
-          <button type="submit">수정 완료</button>
-          <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>취소</button>
-        </div>
-      </form>
-    </div>
+      <div style={{ padding: '20px' }}>
+        <h2>경매 정보 수정</h2>
+        <form onSubmit={(e) => onUpdate(e, formData)}>
+          <label>제목:</label>
+          <input type="text" name="title" value={formData.title} onChange={handleChange} required />
+          <br />
+          <label>내용:</label>
+          <textarea
+              name="content"
+              value={formData.content}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', minHeight: '200px', marginTop: '10px' }}
+          />
+          <br />
+          <label>시작가:</label>
+          <input type="number" name="startPrice" value={formData.startPrice} onChange={handleChange} />
+          <br />
+          <label>마감 시간:</label>
+          <input type="datetime-local" name="endTime" value={formData.endTime} onChange={handleChange} />
+          <br />
+          <button type="submit" style={{ marginTop: '10px' }}>수정 완료</button>
+          <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>
+            취소
+          </button>
+        </form>
+      </div>
   );
 };
 
