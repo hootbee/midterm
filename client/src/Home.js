@@ -42,7 +42,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
       const token = localStorage.getItem('token');
       
       try {
-        let url = `/api/auctions?page=${currentPage}&limit=5`;
+        let url = `/api/auctions?page=${currentPage}&limit=20`;
         if (searchTerm && searchType) {
           url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
         }
@@ -157,7 +157,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
         // Re-fetch items to update the list
         const searchTerm = searchParams.get('search');
         const searchType = searchParams.get('type');
-        let url = `/api/auctions?page=${currentPage}&limit=5`;
+        let url = `/api/auctions?page=${currentPage}&limit=20`;
 
         if (searchTerm && searchType) {
           url += `&search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(searchType)}`;
