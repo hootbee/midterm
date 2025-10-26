@@ -616,15 +616,26 @@ const getAuctionItemsByIds = async (req, res) => {
     const items = await AuctionItem.find({ '_id': { $in: ids } });
     res.json(items);
   } catch (error) {
-    console.error('Error fetching items by IDs:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+const getAllActiveAuctions = async (req, res) => {
+  try {
+    const items = await AuctionItem.find({ status: 'active' });
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching all active auctions:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 module.exports = {
   createAuctionItem,
   getAuctionItems,
   getAuctionItemsByIds,
+  getAllActiveAuctions,
   getAuctionItemById,
   downloadItemFile,
   deleteAuctionItem,

@@ -1,0 +1,84 @@
+.calendar-full-container {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 30px 0;
+}
+
+.calendar-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.calendar-header p {
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
+.calendar-wrapper {
+    width: 98%;              /* ✅ 화면 거의 전체 */
+    margin: 0 auto;          /* 가운데 정렬 */
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    height: 85vh;            /* ✅ 세로도 확대 */
+    transition: all 0.3s ease;
+}
+
+.calendar-wrapper:hover {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* 📆 달력 내부 스타일 커스터마이징 */
+.rbc-calendar {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 오늘 날짜 강조 */
+.rbc-today {
+    background-color: #fff7ed !important;
+    border: 2px solid #fb923c !important;
+}
+
+/* 헤더와 툴바 디자인 통일 */
+.rbc-toolbar {
+    justify-content: space-between !important;
+}
+
+.rbc-toolbar button {
+    background-color: #e2e8f0;
+    border: none;
+    border-radius: 6px;
+    color: #1e293b;
+    padding: 4px 12px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.rbc-toolbar button:hover {
+    background-color: #cbd5e1;
+}
+
+/* 날짜 헤더 */
+.rbc-header {
+    color: #475569;
+    font-weight: 600;
+    background-color: #f1f5f9;
+}
+
+/* 이벤트 hover 효과 */
+.rbc-event:hover {
+    transform: scale(1.05);
+    background-color: #dc2626 !important;
+}
+.rbc-time-view, .rbc-month-view {
+    min-width: 100% !important; /* ✅ 좌우 가득 확장 */
+}

@@ -13,6 +13,7 @@ import CreateAuctionItem from './CreateAuctionItem';
 import MyBids from './MyBids';
 import MySelling from './MySelling'; // Import MySelling component
 import DMPage from './DMPage';
+import CalendarPage from './CalendarPage';
 
 import AnnouncementPage from './AnnouncementPage';
 
@@ -35,6 +36,7 @@ function App() {
           <Link to="/"><button>메인화면으로 가기</button></Link>
           <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
           <Link to="/announcements"><button style={{ marginLeft: '10px' }}>공지사항</button></Link>
+          <Link to="/calendar"><button style={{ marginLeft: '10px' }}>캘린더</button></Link>
 
         </div>
 
@@ -67,6 +69,7 @@ function App() {
           <Route path="/my-selling" element={<LoggedInRoute><MySelling /></LoggedInRoute>} /> {/* New route for MySelling */}
           <Route path="/dm" element={<LoggedInRoute><DMPage /></LoggedInRoute>} />
           <Route path="/announcements" element={<AnnouncementPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
 
         </Routes>
       </header>

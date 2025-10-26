@@ -143,7 +143,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createAuctionItem, getAuctionItems, getAuctionItemsByIds, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, extendAuctionEndTime, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
+const { createAuctionItem, getAuctionItems, getAuctionItemsByIds, getAllActiveAuctions, getAuctionItemById, downloadItemFile, deleteAuctionItem, updateAuctionItem, reportAuctionItem, getReportedItems, resetReportsForItem, getBidAuctions, getSellingAuctions, markPaid, markCompleted, cancelAuction, extendAuctionEndTime, hideAuctionsForBidder, hideAuctionsForSeller } = require('../controllers/auctionController');
 const upload = require('../middleware/uploadMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
@@ -332,6 +332,26 @@ router.post('/', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, 
  *         description: Server error
  */
 router.post('/by-ids', getAuctionItemsByIds);
+
+/**
+ * @swagger
+ * /api/auctions/all:
+ *   get:
+ *     summary: Get all active auction items (for calendar)
+ *     tags: [Auctions]
+ *     responses:
+ *       200:
+ *         description: A list of all active auction items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/AuctionItem'
+ *       500:
+ *         description: Server error
+ */
+router.get('/all', getAllActiveAuctions);
 
 /**
  * @swagger
