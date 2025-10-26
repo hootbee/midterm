@@ -12,6 +12,35 @@ const pageWrapperStyle = {
   color: '#1a1a1a',
 };
 
+const headerBarStyle = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  rowGap: '12px',
+  marginBottom: '24px',
+};
+
+const headerLeftCol = {
+  minWidth: 0,
+};
+
+const headerTitleStyle = {
+  fontSize: '24px',
+  fontWeight: 600,
+  margin: 0,
+  lineHeight: 1.2,
+  color: '#111827',
+};
+
+const headerRightCol = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  gap: '8px',
+};
+
 const sectionHeaderRow = {
   display: 'flex',
   flexWrap: 'wrap',
@@ -26,6 +55,7 @@ const leftRowGroup = {
   flexWrap: 'wrap',
   alignItems: 'center',
   gap: '8px',
+  minWidth: 0,
 };
 
 const rightRowGroup = {
@@ -35,13 +65,20 @@ const rightRowGroup = {
   gap: '8px',
 };
 
+const subInfoText = {
+  fontSize: '13px',
+  color: '#6b7280',
+  lineHeight: 1.4,
+};
+
 const buttonBase = {
-  border: '1px solid #ccc',
+  border: '1px solid #d1d5db',
   backgroundColor: '#fff',
-  color: '#333',
+  color: '#374151',
   padding: '8px 12px',
   borderRadius: '6px',
   fontSize: '14px',
+  fontWeight: 500,
   cursor: 'pointer',
   lineHeight: 1.4,
 };
@@ -58,6 +95,11 @@ const buttonDanger = {
   backgroundColor: '#dc2626',
   border: '1px solid #dc2626',
   color: '#fff',
+};
+
+const buttonDisabledStyle = {
+  opacity: 0.5,
+  cursor: 'not-allowed',
 };
 
 const bannerStyle = {
@@ -96,56 +138,92 @@ const listControlsBar = {
   marginBottom: '16px',
 };
 
-const containerStyle = {
+const gridWrapperStyle = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(min(500px, 100%), 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(520px, 100%), 1fr))',
   gap: '16px',
+};
+
+const cardOuterWrapperStyle = {
+  position: 'relative',
+  display: 'flex',
+  alignItems: 'stretch',
+};
+
+const selectionCheckboxWrapper = {
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'flex-start',
+  paddingTop: '8px',
+  paddingRight: '8px',
+};
+
+const selectionCheckboxStyle = {
+  width: '18px',
+  height: '18px',
+  cursor: 'pointer',
 };
 
 const itemCardStyle = {
   position: 'relative',
+  flexGrow: 1,
   border: '1px solid #e5e7eb',
   borderRadius: '10px',
   padding: '16px',
   display: 'flex',
   gap: '16px',
-  alignItems: 'flex-start',
   backgroundColor: '#fff',
-  boxShadow:
-      '0 1px 2px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.06)',
-  transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+  boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.06)',
+  transition: 'box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
 };
 
 const itemCardHoverStyle = {
-  boxShadow:
-      '0 4px 8px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.06)',
-  borderColor: '#c7d2fe',
+  boxShadow: '0 6px 14px rgba(0,0,0,0.07), 0 3px 6px rgba(0,0,0,0.06)',
+  borderColor: '#93c5fd',
+  transform: 'translateY(-2px)',
 };
 
-const badgeRowStyle = {
+const badgeStackStyle = {
   position: 'absolute',
-  bottom: '12px',
-  left: '16px',
+  top: '12px',
+  left: '12px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: '6px',
+  zIndex: 2,
+};
+
+const creditBadgeStyle = {
+  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+  color: '#fff',
+  padding: '3px 8px',
+  borderRadius: '6px',
+  fontSize: '11px',
+  fontWeight: 600,
+  lineHeight: 1.2,
+  boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
+  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: '4px',
+  letterSpacing: '-0.02em',
 };
 
-const sellerBadgeStyle = {
-  backgroundColor: '#dc2626',
-  color: '#fff',
-  padding: '2px 6px',
-  borderRadius: '4px',
+const favoriteBadgeStyle = {
+  background: 'linear-gradient(135deg, #fff7b2, #fde047)',
+  color: '#92400e',
+  padding: '3px 8px',
+  borderRadius: '6px',
   fontSize: '11px',
-  fontWeight: 500,
+  fontWeight: 600,
   lineHeight: 1.2,
-};
-
-const favoriteStarStyle = {
-  color: 'gold',
-  fontSize: '16px',
-  textShadow: '0 0 3px rgba(0,0,0,0.3)',
-  lineHeight: 1,
+  boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+  textShadow: '0 1px 1px rgba(255,255,255,0.6)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+  letterSpacing: '-0.02em',
 };
 
 const thumbnailWrapperStyle = {
@@ -159,6 +237,7 @@ const thumbnailWrapperStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  position: 'relative',
 };
 
 const thumbnailImgStyle = {
@@ -167,8 +246,15 @@ const thumbnailImgStyle = {
   objectFit: 'cover',
 };
 
-const itemContentStyle = {
+const itemBodyWrapperStyle = {
   flexGrow: 1,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+};
+
+const topInfoAreaStyle = {
   minWidth: 0,
   textDecoration: 'none',
   color: 'inherit',
@@ -196,19 +282,30 @@ const priceTextStyle = {
   color: '#111827',
   margin: '6px 0 0 0',
   fontWeight: 500,
+  lineHeight: 1.4,
 };
 
 const endTimeTextStyle = {
   fontSize: '12px',
   color: '#6b7280',
   marginTop: '4px',
+  lineHeight: 1.4,
+};
+
+const cardFooterRowStyle = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  marginTop: '12px',
+  gap: '8px',
 };
 
 const perItemDeleteBtnStyle = {
   ...buttonDanger,
   fontSize: '12px',
   padding: '6px 8px',
-  alignSelf: 'flex-start',
+  lineHeight: 1.3,
   whiteSpace: 'nowrap',
 };
 
@@ -305,7 +402,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
     }
   };
 
-  // 전체 선택 모드 토글
+  // 선택 모드 토글
   const toggleSelectionMode = () => {
     setIsSelectionMode((prev) => !prev);
     setSelectedItems([]);
@@ -314,9 +411,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
   // 개별 선택
   const handleSelectItem = (itemId) => {
     setSelectedItems((prev) =>
-        prev.includes(itemId)
-            ? prev.filter((id) => id !== itemId)
-            : [...prev, itemId]
+        prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
     );
   };
 
@@ -336,12 +431,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
       return;
     }
 
-    if (
-        !window.confirm(
-            `${selectedItems.length}개의 아이템을 정말로 삭제하시겠습니까?`
-        )
-    )
-      return;
+    if (!window.confirm(`${selectedItems.length}개의 아이템을 정말로 삭제하시겠습니까?`)) return;
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -388,10 +478,10 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
         {/* 섹션 헤더 */}
         <div style={sectionHeaderRow}>
           <div style={leftRowGroup}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>경매장</h2>
-            <span style={{ fontSize: '13px', color: '#6b7280' }}>
-            총 {items.length}개 항목
-          </span>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, color: '#111827' }}>
+              경매장
+            </h2>
+            <span style={subInfoText}>총 {items.length}개 항목</span>
           </div>
 
           <div style={rightRowGroup}>
@@ -411,9 +501,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
         {isSelectionMode && (
             <div style={listControlsBar}>
               <button onClick={handleSelectAll} style={buttonBase}>
-                {selectedItems.length === items.length
-                    ? '전체 선택 해제'
-                    : '전체 선택하기'}
+                {selectedItems.length === items.length ? '전체 선택 해제' : '전체 선택하기'}
               </button>
 
               <button
@@ -421,9 +509,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                   disabled={selectedItems.length === 0}
                   style={{
                     ...buttonDanger,
-                    opacity: selectedItems.length === 0 ? 0.5 : 1,
-                    cursor:
-                        selectedItems.length === 0 ? 'not-allowed' : 'pointer',
+                    ...(selectedItems.length === 0 ? buttonDisabledStyle : {}),
                   }}
               >
                 선택된 아이템 삭제 ({selectedItems.length})
@@ -432,7 +518,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
         )}
 
         {/* 아이템 리스트 */}
-        <div style={containerStyle}>
+        <div style={gridWrapperStyle}>
           {items.map((item) => {
             const isOwner = userUuid === item.sellerUuid;
             const canDelete = isLoggedIn && (isAdmin || isOwner);
@@ -441,110 +527,116 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
             return (
                 <div
                     key={item._id}
-                    style={{
-                      ...itemCardStyle,
-                      ...(hovering ? itemCardHoverStyle : {}),
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
+                    style={cardOuterWrapperStyle}
                     onMouseEnter={() => setHoveredId(item._id)}
                     onMouseLeave={() => setHoveredId(null)}
                 >
-                  {/* 신용 / 즐겨찾기 배지 (우측 상단) */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    zIndex: 2
-                  }}>
-                    {item.sellerReputationScore >= 100 && (
-                        <div
-                            style={{
-                              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                              color: '#fff',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              letterSpacing: '0.5px',
-                              boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                              animation: 'pulseBadge 1.8s infinite ease-in-out'
-                            }}
-                        >
-                          <span style={{fontSize: '14px'}}>💎</span>
-                          신용
-                        </div>
-                    )}
+                  {/* 체크박스 (선택모드일 때만) */}
+                  {isSelectionMode && (
+                      <div style={selectionCheckboxWrapper}>
+                        <input
+                            type="checkbox"
+                            style={selectionCheckboxStyle}
+                            checked={selectedItems.includes(item._id)}
+                            onChange={() => handleSelectItem(item._id)}
+                        />
+                      </div>
+                  )}
 
-                    {item.isFavorited && (
-                        <div
-                            style={{
-                              fontSize: '22px',
-                              color: 'gold',
-                              textShadow: '0 0 6px rgba(255,215,0,0.8)',
-                              transform: hovering ? 'rotate(10deg)' : 'none',
-                              transition: 'transform 0.3s ease',
-                              animation: 'twinkle 1.5s infinite alternate ease-in-out'
-                            }}
-                        >
-                          ★
-                        </div>
-                    )}
-                  </div>
-
-                  {/* 이미지 + 본문 */}
-                  <Link
-                      to={`/auction/${item._id}`}
+                  {/* 카드 본체 */}
+                  <div
                       style={{
-                        ...itemContentStyle,
-                        display: 'flex',
-                        gap: '16px',
+                        ...itemCardStyle,
+                        ...(hovering ? itemCardHoverStyle : {}),
                       }}
                   >
-                    <div style={thumbnailWrapperStyle}>
-                      {item.imagePath ? (
-                          <img
-                              src={`/${item.imagePath}`}
-                              alt={item.title}
-                              style={thumbnailImgStyle}
-                          />
-                      ) : (
-                          <span style={{fontSize: '12px', color: '#9ca3af'}}>
-          No Image
-        </span>
+                    {/* 상단 뱃지들 (신용 / 즐겨찾기) */}
+                    <div style={badgeStackStyle}>
+                      {item.sellerReputationScore >= 100 && (
+                          <div style={creditBadgeStyle}>
+                      <span role="img" aria-label="trusted">
+                        💎
+                      </span>
+                            <span>신용</span>
+                          </div>
+                      )}
+
+                      {item.isFavorited && (
+                          <div style={favoriteBadgeStyle}>
+                      <span role="img" aria-label="star">
+                        ⭐
+                      </span>
+                            <span>즐겨찾기</span>
+                          </div>
                       )}
                     </div>
 
-                    <div style={{flexGrow: 1, minWidth: 0}}>
-                      <h3 style={titleStyle}>{item.title}</h3>
-                      <p style={metaTextStyle}>
-                        판매자 평판: {item.sellerReputationScore}점
-                      </p>
-                      <p style={metaTextStyle}>판매자 UUID: {item.sellerUuid}</p>
-                      <p style={priceTextStyle}>
-                        경매 시작가: {Number(item.startPrice).toLocaleString()}원
-                      </p>
-                      <p style={endTimeTextStyle}>
-                        마감 시간: {new Date(item.endTime).toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
+                    {/* 썸네일 */}
+                    <Link
+                        to={`/auction/${item._id}`}
+                        style={{
+                          textDecoration: 'none',
+                          color: 'inherit',
+                          display: 'flex',
+                          gap: '16px',
+                          flexShrink: 0,
+                        }}
+                    >
+                      <div style={thumbnailWrapperStyle}>
+                        {item.imagePath ? (
+                            <img
+                                src={`/${item.imagePath}`}
+                                alt={item.title}
+                                style={thumbnailImgStyle}
+                            />
+                        ) : (
+                            <span style={{ fontSize: '12px', color: '#9ca3af' }}>No Image</span>
+                        )}
+                      </div>
+                    </Link>
 
-                  {!isSelectionMode && canDelete && (
-                      <button
-                          onClick={() => handleDeleteItem(item._id)}
-                          style={perItemDeleteBtnStyle}
+                    {/* 본문 내용 + 푸터 */}
+                    <div style={itemBodyWrapperStyle}>
+                      {/* 상단 정보 (제목 등) */}
+                      <Link
+                          to={`/auction/${item._id}`}
+                          style={topInfoAreaStyle}
                       >
-                        삭제하기
-                      </button>
-                  )}
+                        <h3 style={titleStyle}>{item.title}</h3>
+
+                        <p style={metaTextStyle}>
+                          판매자 평판: {item.sellerReputationScore}점
+                        </p>
+                        <p style={metaTextStyle}>판매자 UUID: {item.sellerUuid}</p>
+
+                        <p style={priceTextStyle}>
+                          경매 시작가:{' '}
+                          {Number(item.startPrice).toLocaleString()}원
+                        </p>
+
+                        <p style={endTimeTextStyle}>
+                          마감 시간:{' '}
+                          {new Date(item.endTime).toLocaleString()}
+                        </p>
+                      </Link>
+
+                      {/* 하단 푸터 (삭제 버튼 등) */}
+                      <div style={cardFooterRowStyle}>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          ID: {item._id}
+                        </div>
+
+                        {!isSelectionMode && canDelete && (
+                            <button
+                                onClick={() => handleDeleteItem(item._id)}
+                                style={perItemDeleteBtnStyle}
+                            >
+                              삭제하기
+                            </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
             );
           })}
@@ -559,8 +651,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                 style={{
                   ...buttonBase,
                   minWidth: '60px',
-                  opacity: currentPage === 1 ? 0.5 : 1,
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  ...(currentPage === 1 ? buttonDisabledStyle : {}),
                 }}
             >
               이전
@@ -576,9 +667,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                 style={{
                   ...buttonBase,
                   minWidth: '60px',
-                  opacity: currentPage === totalPages ? 0.5 : 1,
-                  cursor:
-                      currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  ...(currentPage === totalPages ? buttonDisabledStyle : {}),
                 }}
             >
               다음
@@ -599,26 +688,21 @@ function Home() {
   const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true);
   const [bannerAnnouncement, setBannerAnnouncement] = useState(null);
 
+  // 토큰 decode
   const decodeToken = (token) => {
     try {
       const base64Url = token.split('.')[1];
-      const base64 = base64Url
-          .replace(/-/g, '+')
-          .replace(/_/g, '/');
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
           atob(base64)
               .split('')
               .map(function (c) {
-                return (
-                    '%' +
-                    ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-                );
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
               })
               .join('')
       );
-
       return JSON.parse(jsonPayload);
-    } catch (e) {
+    } catch {
       return null;
     }
   };
@@ -654,6 +738,7 @@ function Home() {
         setBannerAnnouncement(null);
       }
     };
+
     fetchBanner();
   }, []);
 
@@ -682,68 +767,58 @@ function Home() {
             </div>
         )}
 
-        {/* 상단 유저 영역 */}
-        <header style={{ marginBottom: '24px' }}>
-          <div style={sectionHeaderRow}>
-            <div style={leftRowGroup}>
-              <h1
-                  style={{
-                    fontSize: '24px',
-                    fontWeight: 600,
-                    margin: 0,
-                    lineHeight: 1.2,
-                  }}
-              >
-                메인 화면
-              </h1>
-            </div>
+        {/* 상단 헤더 바 */}
+        <header style={headerBarStyle}>
+          <div style={headerLeftCol}>
+            <h1 style={headerTitleStyle}>메인 화면</h1>
+            {isLoggedIn && userUuid && (
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', wordBreak: 'break-all' }}>
+                  현재 사용자 UUID: {userUuid}
+                </div>
+            )}
+          </div>
 
-            <div style={rightRowGroup}>
-              {isLoggedIn ? (
-                  <>
-                    <button onClick={handleLogout} style={buttonBase}>
-                      로그아웃
-                    </button>
+          <div style={headerRightCol}>
+            {isLoggedIn ? (
+                <>
+                  <button onClick={handleLogout} style={buttonBase}>
+                    로그아웃
+                  </button>
 
-                    <Link to="/profile">
-                      <button style={buttonBase}>개인 프로필가기</button>
-                    </Link>
+                  <Link to="/profile">
+                    <button style={buttonBase}>개인 프로필가기</button>
+                  </Link>
 
-                    <Link to="/my-bids">
-                      <button style={buttonBase}>입찰 내역</button>
-                    </Link>
+                  <Link to="/my-bids">
+                    <button style={buttonBase}>입찰 내역</button>
+                  </Link>
 
-                    <Link to="/my-selling">
-                      <button style={buttonBase}>판매 내역</button>
-                    </Link>
+                  <Link to="/my-selling">
+                    <button style={buttonBase}>판매 내역</button>
+                  </Link>
 
-                    {isAdmin && (
-                        <Link to="/admin">
-                          <button style={buttonPrimary}>관리자 페이지</button>
-                        </Link>
-                    )}
-                  </>
-              ) : (
-                  <>
-                    <Link to="/login">
-                      <button style={buttonPrimary}>로그인</button>
-                    </Link>
+                  {isAdmin && (
+                      <Link to="/admin">
+                        <button style={buttonPrimary}>관리자 페이지</button>
+                      </Link>
+                  )}
+                </>
+            ) : (
+                <>
+                  <Link to="/login">
+                    <button style={buttonPrimary}>로그인</button>
+                  </Link>
 
-                    <Link to="/signup">
-                      <button style={buttonBase}>회원가입</button>
-                    </Link>
-                  </>
-              )}
-            </div>
+                  <Link to="/signup">
+                    <button style={buttonBase}>회원가입</button>
+                  </Link>
+                </>
+            )}
           </div>
         </header>
 
         {/* 경매 리스트 섹션 */}
-        <ItemList
-            isLoggedIn={isLoggedIn}
-            isAdmin={isAdmin}
-            userUuid={userUuid}
-        />
+        <ItemList isLoggedIn={isLoggedIn} isAdmin={isAdmin} userUuid={userUuid} />
       </div>
   );
 }
