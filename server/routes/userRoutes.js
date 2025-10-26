@@ -359,6 +359,25 @@ router.put('/password', authMiddleware, updateMyPassword);
  *         description: Server error
  */
 router.put('/profile', authMiddleware, updateUserProfile);
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   delete:
+ *     summary: Delete the current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/profile', authMiddleware, deleteUserProfile);
 
 /**

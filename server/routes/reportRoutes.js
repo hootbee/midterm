@@ -70,9 +70,33 @@ const adminMiddleware = require('../middleware/adminMiddleware');
 router.get('/:auctionItemId', authMiddleware, adminMiddleware, getReportsForItem);
 router.post('/:auctionItemId', authMiddleware, createReportForItem);
 
-// @route   DELETE /api/reports/:auctionItemId
-// @desc    Delete all reports for a specific auction item (Admin only)
-// @access  Admin
+/**
+ * @swagger
+ * /api/reports/{auctionItemId}:
+ *   delete:
+ *     summary: Delete all reports for an auction item (Admin only)
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: auctionItemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to clear reports for
+ *     responses:
+ *       200:
+ *         description: All reports for the item deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/:auctionItemId', authMiddleware, adminMiddleware, deleteAllReportsForAuctionItem);
 
 module.exports = router;

@@ -154,6 +154,30 @@ const deleteDMRoom = async (req, res) => {
   }
 };
 
+const deleteMessage = async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        const currentUserUuid = req.user.uuid;
+
+        const message = await DMMessage.findById(messageId);
+
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found.' });
+        }
+
+        if (message.receiverUuid !== currentUserUuid) {
+            return res.status(403).json({ message: 'You can only delete messages you received.' });
+        }
+
+        await DMMessage.findByIdAndDelete(messageId);
+
+        res.status(200).json({ message: 'Message deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 // @desc    Send a DM message in an existing room
 // @route   POST /api/dm/room/:roomId/messages
 // @access  Private
@@ -251,6 +275,7 @@ module.exports = {
   leaveDMRoom,
   sendDMMessage,
   deleteDMRoom,
+  deleteMessage, // Add this line
   sendSystemDM,
   setIoInstance, // Export setIoInstance to allow setting the io instance from index.js
 };

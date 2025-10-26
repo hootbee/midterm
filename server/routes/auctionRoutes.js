@@ -149,7 +149,74 @@ const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 const optionalAuthMiddleware = require('../middleware/optionalAuthMiddleware');
 
+/**
+ * @swagger
+ * /api/auctions/hide-for-user:
+ *   put:
+ *     summary: Hide multiple auction items from a bidder's view
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - auctionIds
+ *             properties:
+ *               auctionIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: An array of auction item IDs to hide
+ *     responses:
+ *       200:
+ *         description: Auctions hidden successfully for the user
+ *       400:
+ *         description: Invalid input, auctionIds must be an array
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.put('/hide-for-user', authMiddleware, hideAuctionsForBidder);
+
+/**
+ * @swagger
+ * /api/auctions/hide-for-seller:
+ *   put:
+ *     summary: Hide multiple auction items from the seller's view
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - auctionIds
+ *             properties:
+ *               auctionIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: An array of auction item IDs to hide
+ *     responses:
+ *       200:
+ *         description: Auctions hidden successfully for the seller
+ *       400:
+ *         description: Invalid input, auctionIds must be an array
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, user is not the seller of one or more items
+ *       500:
+ *         description: Server error
+ */
 router.put('/hide-for-seller', authMiddleware, hideAuctionsForSeller);
 
 /**
@@ -470,6 +537,34 @@ router.post('/:id/report', authMiddleware, reportAuctionItem);
  *         description: Server error
  */
 router.put('/:id/reset-reports', authMiddleware, adminMiddleware, resetReportsForItem);
+
+/**
+ * @swagger
+ * /api/auctions/{id}/reports:
+ *   delete:
+ *     summary: Delete all reports for an auction item (Admin only)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to delete reports for
+ *     responses:
+ *       200:
+ *         description: Reports deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin access required)
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/:id/reports', authMiddleware, adminMiddleware, resetReportsForItem);
 
 /**
@@ -693,6 +788,36 @@ router.put('/:id/extend', authMiddleware, extendAuctionEndTime);
  *         description: Server error
  */
 router.post('/:id/cancel', authMiddleware, cancelAuction);
+
+/**
+ * @swagger
+ * /api/auctions/{id}/cancel:
+ *   delete:
+ *     summary: Cancel an active auction (alternative to POST)
+ *     tags: [Auctions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the auction item to cancel
+ *     responses:
+ *       200:
+ *         description: Auction cancelled successfully
+ *       400:
+ *         description: Invalid status (only active auctions can be cancelled)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden, not the seller or admin
+ *       404:
+ *         description: Auction item not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/:id/cancel', authMiddleware, cancelAuction);
 
 module.exports = router;

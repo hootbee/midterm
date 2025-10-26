@@ -13,6 +13,9 @@ function DMPage() {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuRoomId, setContextMenuRoomId] = useState(null);
+  const [messageContextMenuVisible, setMessageContextMenuVisible] = useState(false);
+  const [messageContextMenuPosition, setMessageContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [messageContextMenuMessageId, setMessageContextMenuMessageId] = useState(null);
   const socket = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -63,6 +66,42 @@ function DMPage() {
     }
   };
 
+  const handleMessageContextMenu = (e, message) => {
+    const currentUserUuid = JSON.parse(atob(token.split('.')[1])).uuid;
+    if (message.senderUuid !== currentUserUuid) {
+      e.preventDefault();
+      setMessageContextMenuVisible(true);
+      setMessageContextMenuPosition({ x: e.pageX, y: e.pageY });
+      setMessageContextMenuMessageId(message._id);
+    }
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!messageContextMenuMessageId || !token) return;
+
+    try {
+      const res = await fetch(buildApiUrl(`/api/dm/messages/${messageContextMenuMessageId}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || '메시지 삭제 실패');
+      }
+
+      setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageContextMenuMessageId));
+    } catch (err) {
+      setError(err.message);
+      alert(`메시지 삭제 오류: ${err.message}`);
+    } finally {
+      setMessageContextMenuVisible(false);
+      setMessageContextMenuMessageId(null);
+    }
+  };
+
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!token) {
@@ -97,6 +136,7 @@ function DMPage() {
 
     const handleClickOutside = () => {
       setContextMenuVisible(false);
+      setMessageContextMenuVisible(false);
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -295,6 +335,7 @@ function DMPage() {
               {messages.map((msg) => (
                 <div
                   key={msg._id}
+                  onContextMenu={(e) => handleMessageContextMenu(e, msg)}
                   style={{
                     textAlign: msg.senderUuid === currentUserUuid ? 'right' : 'left',
                     marginBottom: '5px',
@@ -335,6 +376,36 @@ function DMPage() {
           <p>DM 목록에서 대화방을 선택하거나 새 대화를 시작하세요.</p>
         )}
       </div>
+
+      {/* Message Context Menu */}
+      {messageContextMenuVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: messageContextMenuPosition.y,
+            left: messageContextMenuPosition.x,
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+            boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+          }}
+        >
+          <button
+            onClick={handleDeleteMessage}
+            style={{
+              width: '100%',
+              padding: '8px 15px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            삭제
+          </button>
+        </div>
+      )}
     </div>
   );
 }
