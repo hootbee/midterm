@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
+import BidHistoryChart from './BidHistoryChart';
 import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
 /* ===================== 공통 스타일 ===================== */
@@ -472,6 +473,14 @@ function AuctionItemDetail() {
           신고하기
         </button>
         {showReportForm && <ReportForm itemId={item._id} onCancel={() => setShowReportForm(false)} />}
+
+        {/* 입찰 경쟁 현황 실시간 시각화 */}
+        {item.bids && item.bids.length > 0 && (
+          <div style={{ marginTop: '20px' }}>
+            <h4>입찰 경쟁 현황</h4>
+            <BidHistoryChart bids={item.bids} />
+          </div>
+        )}
 
         {/* 입찰 내역 */}
         <div style={{ marginTop: '20px' }}>
