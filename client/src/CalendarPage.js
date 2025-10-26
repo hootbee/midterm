@@ -60,7 +60,7 @@ function CalendarPage() {
       <div className="calendar-full-container">
         <div className="calendar-header">
           <h2>📅 경매 마감 캘린더</h2>
-          <p>각 날짜를 클릭하면 해당 경매 상세 페이지로 이동합니다.</p>
+          <p>각 날짜를 클릭하면 해당 경매 상세 페이지로 이동합니다. (+more를 클릭하면 모든 경매를 볼 수 있습니다)</p>
         </div>
 
         <div className="calendar-wrapper">
@@ -71,6 +71,7 @@ function CalendarPage() {
               endAccessor="end"
               onSelectEvent={handleSelectEvent}
               eventPropGetter={eventStyleGetter}
+              popup
           />
         </div>
       </div>
