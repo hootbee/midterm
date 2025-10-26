@@ -33,6 +33,22 @@ const styles = {
   },
 };
 
+/* ===================== 상태 변환 함수 ===================== */
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'active':
+      return '판매 중';
+    case 'sold':
+      return '판매 완료';
+    case 'ended':
+      return '마감됨';
+    case 'cancelled':
+      return '취소됨';
+    default:
+      return '알 수 없음';
+  }
+};
+
 /* ===================== 공통 Fetch Wrapper ===================== */
 const authorizedFetch = async (url, options = {}) => {
   const token = localStorage.getItem('token');
@@ -223,7 +239,7 @@ function AuctionItemDetail() {
     }
   };
 
-  /* ===================== 렌더링 조건 계산 ===================== */
+  /* ===================== 렌더링 조건 ===================== */
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
   if (!item) return <div>아이템을 찾을 수 없습니다.</div>;
@@ -282,7 +298,26 @@ function AuctionItemDetail() {
         <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
         <p>남은 시간: <Countdown endTime={item.endTime} /></p>
         {timeExtended && <p style={{ color: 'red' }}>⏱ 마감 시간이 연장되었습니다!</p>}
-        <p>상태: {item.status}</p>
+
+        {/* ✅ 상태 표시 부분 수정 */}
+        <p>
+          <strong>경매 상태:</strong>{' '}
+          <span
+              style={{
+                color:
+                    item.status === 'active'
+                        ? '#007bff'
+                        : item.status === 'sold'
+                            ? 'green'
+                            : item.status === 'cancelled'
+                                ? 'red'
+                                : 'gray',
+                fontWeight: 600,
+              }}
+          >
+          {getStatusLabel(item.status)}
+        </span>
+        </p>
 
         {token && (
             <button
@@ -303,7 +338,7 @@ function AuctionItemDetail() {
             <div
                 style={{
                   ...styles.biddingCard,
-                  backgroundColor: '#e8f4ff', // 💡 밝은 하늘색 배경
+                  backgroundColor: '#e8f4ff',
                   border: '2px solid #007bff',
                   color: '#000',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
@@ -311,7 +346,7 @@ function AuctionItemDetail() {
             >
               <h4
                   style={{
-                    color: '#007bff',         // 💙 메인 포인트 컬러
+                    color: '#007bff',
                     fontWeight: 700,
                     fontSize: '1.2rem',
                     marginBottom: '15px',
@@ -359,7 +394,12 @@ function AuctionItemDetail() {
               <button onClick={() => setIsEditMode(true)}>수정하기</button>
               <button
                   onClick={handleDelete}
-                  style={{ ...styles.button, backgroundColor: '#dc3545', color: '#fff', marginLeft: '10px' }}
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#dc3545',
+                    color: '#fff',
+                    marginLeft: '10px',
+                  }}
               >
                 삭제하기
               </button>
@@ -379,22 +419,22 @@ function AuctionItemDetail() {
 
         {/* 다운로드 */}
         {isWinner && item.transactionStatus === 'completed' && (
-            <div style={{
-              ...styles.biddingCard,
-              backgroundColor: '#e8f4ff', // 💡 더 밝은 파란 배경
-              border: '2px solid #007bff',
-              color: '#000',              // ✅ 진한 글자색
-            }}>
-              <h4 style={{ color: '#007bff', fontWeight: 700 }}>
-                🎉 최종 낙찰자입니다!
-              </h4>
+            <div
+                style={{
+                  ...styles.biddingCard,
+                  backgroundColor: '#e8f4ff',
+                  border: '2px solid #007bff',
+                  color: '#000',
+                }}
+            >
+              <h4 style={{ color: '#007bff', fontWeight: 700 }}>🎉 최종 낙찰자입니다!</h4>
               <button
                   onClick={handleDownload}
                   style={{
                     ...styles.button,
                     backgroundColor: '#007bff',
                     color: '#fff',
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
               >
                 족보 다운로드
@@ -412,12 +452,15 @@ function AuctionItemDetail() {
         <div style={{ marginTop: '20px' }}>
           <h4>입찰 내역</h4>
           <ul>
-            {item.bids.slice().reverse().map((b, i) => (
-                <li key={i}>
-                  {new Date(b.timestamp).toLocaleString()}: {b.amount.toLocaleString()}원 (
-                  {b.bidderUuid.substring(0, 8)}…)
-                </li>
-            ))}
+            {item.bids
+                .slice()
+                .reverse()
+                .map((b, i) => (
+                    <li key={i}>
+                      {new Date(b.timestamp).toLocaleString()}: {b.amount.toLocaleString()}원 (
+                      {b.bidderUuid.substring(0, 8)}…)
+                    </li>
+                ))}
           </ul>
         </div>
 
@@ -426,7 +469,7 @@ function AuctionItemDetail() {
   );
 }
 
-/* ===================== 신고폼 ===================== */
+/* ===================== 신고 폼 ===================== */
 const ReportForm = ({ itemId, onCancel }) => {
   const [reason, setReason] = useState('');
 
@@ -453,13 +496,19 @@ const ReportForm = ({ itemId, onCancel }) => {
             <input
                 type="checkbox"
                 checked={reason === '허위 게시물'}
-                onChange={() => setReason(reason === '허위 게시물' ? '' : '허위 게시물')}
+                onChange={() =>
+                    setReason(reason === '허위 게시물' ? '' : '허위 게시물')
+                }
             />
             허위 게시물
           </label>
           <div style={{ marginTop: '10px' }}>
             <button type="submit">신고 접수</button>
-            <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>
+            <button
+                type="button"
+                onClick={onCancel}
+                style={{ marginLeft: '10px' }}
+            >
               취소
             </button>
           </div>
@@ -477,14 +526,21 @@ const EditForm = ({ item, onUpdate, onCancel }) => {
     endTime: new Date(item.endTime).toISOString().slice(0, 16),
   });
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+      setFormData({ ...formData, [e.target.name]: e.target.value });
 
   return (
       <div style={{ padding: '20px' }}>
         <h2>경매 정보 수정</h2>
         <form onSubmit={(e) => onUpdate(e, formData)}>
           <label>제목:</label>
-          <input type="text" name="title" value={formData.title} onChange={handleChange} required />
+          <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+          />
           <br />
           <label>내용:</label>
           <textarea
@@ -496,12 +552,24 @@ const EditForm = ({ item, onUpdate, onCancel }) => {
           />
           <br />
           <label>시작가:</label>
-          <input type="number" name="startPrice" value={formData.startPrice} onChange={handleChange} />
+          <input
+              type="number"
+              name="startPrice"
+              value={formData.startPrice}
+              onChange={handleChange}
+          />
           <br />
           <label>마감 시간:</label>
-          <input type="datetime-local" name="endTime" value={formData.endTime} onChange={handleChange} />
+          <input
+              type="datetime-local"
+              name="endTime"
+              value={formData.endTime}
+              onChange={handleChange}
+          />
           <br />
-          <button type="submit" style={{ marginTop: '10px' }}>수정 완료</button>
+          <button type="submit" style={{ marginTop: '10px' }}>
+            수정 완료
+          </button>
           <button type="button" onClick={onCancel} style={{ marginLeft: '10px' }}>
             취소
           </button>
