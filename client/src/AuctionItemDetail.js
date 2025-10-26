@@ -156,6 +156,12 @@ function AuctionItemDetail() {
     updateRecentlyViewed(id);
   }, [id]);
 
+  const speak = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    window.speechSynthesis.speak(utterance);
+  };
+
   /* ===================== Socket 설정 ===================== */
   useEffect(() => {
     if (!token) return;
@@ -163,6 +169,10 @@ function AuctionItemDetail() {
     socketRef.current = socket;
     socket.emit('join_room', id);
     socket.on('bid_update', (updatedItem) => {
+      if (itemRef.current && updatedItem.currentPrice > itemRef.current.currentPrice) {
+        speak(`새 입찰 ${updatedItem.currentPrice}원`);
+      }
+
       if (itemRef.current && new Date(updatedItem.endTime) > new Date(itemRef.current.endTime)) {
         setTimeExtended(true);
         setTimeout(() => setTimeExtended(false), 3000);
