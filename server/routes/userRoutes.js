@@ -100,7 +100,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { signup, login, searchUserByUuid, getMe, deleteUser, deleteMyAccount, updateMyPassword, updateUserProfile, updateUserReputation, updateUserAdminStatus, updateUserBalance, getAllUsers } = require('../controllers/userController');
+const { signup, login, searchUserByUuid, getMe, deleteUser, deleteMyAccount, updateMyPassword, updateUserProfile, deleteUserProfile, updateUserReputation, updateUserAdminStatus, updateUserBalance, getAllUsers } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
@@ -320,43 +320,6 @@ router.put('/password', authMiddleware, updateMyPassword);
 
 /**
  * @swagger
- * /api/users/{uuid}:
- *   delete:
- *     summary: Delete a user by UUID (Admin only)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: uuid
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: UUID of the user to delete
- *     responses:
- *       200:
- *         description: User deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       401:
- *         description: Unauthorized, no token or invalid token
- *       403:
- *         description: Forbidden, not an admin user
- *       404:
- *         description: User not found
- *       500:
- *         description: Server error
- */
-router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
-
-/**
- * @swagger
  * /api/users/profile:
  *   put:
  *     summary: Update user profile
@@ -396,6 +359,44 @@ router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
  *         description: Server error
  */
 router.put('/profile', authMiddleware, updateUserProfile);
+router.delete('/profile', authMiddleware, deleteUserProfile);
+
+/**
+ * @swagger
+ * /api/users/{uuid}:
+ *   delete:
+ *     summary: Delete a user by UUID (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID of the user to delete
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized, no token or invalid token
+ *       403:
+ *         description: Forbidden, not an admin user
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:uuid', authMiddleware, adminMiddleware, deleteUser);
 
 /**
  * @swagger

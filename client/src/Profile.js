@@ -82,6 +82,37 @@ function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (window.confirm('정말로 회원탈퇴를 하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/users/profile', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          localStorage.removeItem('token');
+          alert('회원탈퇴가 완료되었습니다.');
+          window.location.href = '/'; // Redirect to homepage
+        } else {
+          const data = await res.json();
+          alert(`회원탈퇴 실패: ${data.message || res.statusText}`);
+        }
+      } catch (err) {
+        console.error('회원탈퇴 오류:', err);
+        alert('회원탈퇴 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   const handleChargeBalance = async () => {
     const amount = window.prompt("얼마를 충전하시겠습니까?");
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
@@ -203,6 +234,9 @@ function Profile() {
       )}
       <button onClick={handleChargeBalance} style={{ marginTop: '20px', marginLeft: '10px' }}>
         결제하기
+      </button>
+      <button onClick={handleDeleteAccount} style={{ marginTop: '20px', marginLeft: '10px', backgroundColor: 'red', color: 'white' }}>
+        회원탈퇴
       </button>
     </div>
   );

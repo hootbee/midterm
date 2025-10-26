@@ -1,4 +1,10 @@
 const { findUserByEmailOrStudentId, createUser, findUserByEmail, findUserByUuid, deleteUserByUuid, updateUserByUuid, updateReputationByUuid, updateBalanceByUuid, findAllUsers, findUserWithPasswordByUuid, updatePasswordByUuid, updateAdminStatusByUuid } = require('../models/userModel');
+const { AuctionItem } = require('../models/auctionItemModel');
+const Comment = require('../models/commentModel');
+const DMMessage = require('../models/dmMessageModel');
+const DMRoom = require('../models/dmRoomModel');
+const FavoriteAuction = require('../models/favoriteAuctionModel');
+const { Report } = require('../models/reportModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -253,6 +259,32 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const deleteUserProfile = async (req, res) => {
+  try {
+    const userUuid = req.user.uuid;
+
+    // Delete associated data from MongoDB
+    await AuctionItem.deleteMany({ sellerUuid: userUuid });
+    await Comment.deleteMany({ commenterUuid: userUuid });
+    await DMMessage.deleteMany({ $or: [{ senderUuid: userUuid }, { receiverUuid: userUuid }] });
+    await DMRoom.deleteMany({ participants: userUuid });
+    await FavoriteAuction.deleteMany({ userUuid: userUuid });
+    await Report.deleteMany({ reporterUuid: userUuid });
+
+    // Delete user from MariaDB
+    const result = await deleteUserByUuid(userUuid);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json({ message: 'Your account has been deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting user profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const updateUserReputation = async (req, res) => {
   try {
     const { uuid } = req.params;
@@ -365,6 +397,7 @@ module.exports = {
   deleteMyAccount,
   updateMyPassword,
   updateUserProfile,
+  deleteUserProfile,
   updateUserReputation,
   updateUserAdminStatus,
   updateUserBalance,
