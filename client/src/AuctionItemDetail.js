@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
+import BidPredictionBox from './BidPredictionBox';
 import BidHistoryChart from './BidHistoryChart';
 import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
@@ -357,6 +358,15 @@ function AuctionItemDetail() {
             >
               {isFavorited ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
             </button>
+        )}
+
+        {/* 입찰 경쟁 예측 */}
+        {item.status === 'active' && (
+            <BidPredictionBox
+                bids={item.bids || []}
+                currentPrice={item.currentPrice}
+                endTime={item.endTime}
+            />
         )}
 
         {/* 입찰 섹션 */}
