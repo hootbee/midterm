@@ -341,6 +341,12 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
   const [searchParams] = useSearchParams();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 아이템 목록 가져오기
   const fetchItems = useCallback(async () => {
@@ -523,74 +529,86 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
             const isOwner = userUuid === item.sellerUuid;
             const canDelete = isLoggedIn && (isAdmin || isOwner);
             const hovering = hoveredId === item._id;
+            const remainingTime = new Date(item.endTime).getTime() - now.getTime();
+            const isUrgent = remainingTime > 0 && remainingTime < 180000; // 3 minutes
 
             return (
-                <div
-                    key={item._id}
-                    style={cardOuterWrapperStyle}
-                    onMouseEnter={() => setHoveredId(item._id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                >
-                  {/* 체크박스 (선택모드일 때만) */}
-                  {isSelectionMode && (
-                      <div style={selectionCheckboxWrapper}>
-                        <input
-                            type="checkbox"
-                            style={selectionCheckboxStyle}
-                            checked={selectedItems.includes(item._id)}
-                            onChange={() => handleSelectItem(item._id)}
-                        />
-                      </div>
-                  )}
+              <div
+                key={item._id}
+                style={cardOuterWrapperStyle}
+                onMouseEnter={() => setHoveredId(item._id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                {/* 체크박스 (선택모드일 때만) */}
+                {isSelectionMode && (
+                  <div style={selectionCheckboxWrapper}>
+                    <input
+                      type="checkbox"
+                      style={selectionCheckboxStyle}
+                      checked={selectedItems.includes(item._id)}
+                      onChange={() => handleSelectItem(item._id)}
+                    />
+                  </div>
+                )}
 
-                  {/* 카드 본체 */}
+                {/* 카드 본체 */}
+                <div
+                  className={isUrgent ? 'bidding-urgency-panic' : ''}
+                  style={{
+                    ...itemCardStyle,
+                    ...(hovering ? itemCardHoverStyle : {}),
+                  }}
+                >
                   <div
-                      style={{
-                        ...itemCardStyle,
-                        ...(hovering ? itemCardHoverStyle : {}),
-                      }}
+                    style={{
+                      position: 'relative',
+                      zIndex: 2,
+                      width: '100%',
+                      display: 'flex',
+                      gap: '16px',
+                    }}
                   >
                     {/* 상단 뱃지들 (신용 / 즐겨찾기) */}
                     <div style={badgeStackStyle}>
                       {item.sellerReputationScore >= 100 && (
-                          <div style={creditBadgeStyle}>
-                      <span role="img" aria-label="trusted">
-                        💎
-                      </span>
-                            <span>신용</span>
-                          </div>
+                        <div style={creditBadgeStyle}>
+                          <span role="img" aria-label="trusted">
+                            💎
+                          </span>
+                          <span>신용</span>
+                        </div>
                       )}
 
                       {item.isFavorited && (
-                          <div style={favoriteBadgeStyle}>
-                      <span role="img" aria-label="star">
-                        ⭐
-                      </span>
-                            <span>즐겨찾기</span>
-                          </div>
+                        <div style={favoriteBadgeStyle}>
+                          <span role="img" aria-label="star">
+                            ⭐
+                          </span>
+                          <span>즐겨찾기</span>
+                        </div>
                       )}
                     </div>
 
                     {/* 썸네일 */}
                     <Link
-                        to={`/auction/${item._id}`}
-                        style={{
-                          textDecoration: 'none',
-                          color: 'inherit',
-                          display: 'flex',
-                          gap: '16px',
-                          flexShrink: 0,
-                        }}
+                      to={`/auction/${item._id}`}
+                      style={{
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        display: 'flex',
+                        gap: '16px',
+                        flexShrink: 0,
+                      }}
                     >
                       <div style={thumbnailWrapperStyle}>
                         {item.imagePath ? (
-                            <img
-                                src={`/${item.imagePath}`}
-                                alt={item.title}
-                                style={thumbnailImgStyle}
-                            />
+                          <img
+                            src={`/${item.imagePath}`}
+                            alt={item.title}
+                            style={thumbnailImgStyle}
+                          />
                         ) : (
-                            <span style={{ fontSize: '12px', color: '#9ca3af' }}>No Image</span>
+                          <span style={{ fontSize: '12px', color: '#9ca3af' }}>No Image</span>
                         )}
                       </div>
                     </Link>
@@ -598,46 +616,38 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                     {/* 본문 내용 + 푸터 */}
                     <div style={itemBodyWrapperStyle}>
                       {/* 상단 정보 (제목 등) */}
-                      <Link
-                          to={`/auction/${item._id}`}
-                          style={topInfoAreaStyle}
-                      >
+                      <Link to={`/auction/${item._id}`} style={topInfoAreaStyle}>
                         <h3 style={titleStyle}>{item.title}</h3>
 
-                        <p style={metaTextStyle}>
-                          판매자 평판: {item.sellerReputationScore}점
-                        </p>
+                        <p style={metaTextStyle}>판매자 평판: {item.sellerReputationScore}점</p>
                         <p style={metaTextStyle}>판매자 UUID: {item.sellerUuid}</p>
 
                         <p style={priceTextStyle}>
-                          경매 시작가:{' '}
-                          {Number(item.startPrice).toLocaleString()}원
+                          경매 시작가: {Number(item.startPrice).toLocaleString()}원
                         </p>
 
                         <p style={endTimeTextStyle}>
-                          마감 시간:{' '}
-                          {new Date(item.endTime).toLocaleString()}
+                          마감 시간: {new Date(item.endTime).toLocaleString()}
                         </p>
                       </Link>
 
                       {/* 하단 푸터 (삭제 버튼 등) */}
                       <div style={cardFooterRowStyle}>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                          ID: {item._id}
-                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>ID: {item._id}</div>
 
                         {!isSelectionMode && canDelete && (
-                            <button
-                                onClick={() => handleDeleteItem(item._id)}
-                                style={perItemDeleteBtnStyle}
-                            >
-                              삭제하기
-                            </button>
+                          <button
+                            onClick={() => handleDeleteItem(item._id)}
+                            style={perItemDeleteBtnStyle}
+                          >
+                            삭제하기
+                          </button>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
             );
           })}
         </div>
