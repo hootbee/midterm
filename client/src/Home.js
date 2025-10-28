@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import io from 'socket.io-client';
+import { SOCKET_ENDPOINT } from './apiConfig';
 
 /* ---------- 공통 스타일 ---------- */
 
@@ -342,6 +344,16 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [now, setNow] = useState(new Date());
+  const [viewerCounts, setViewerCounts] = useState({});
+
+  useEffect(() => {
+    const socket = io(SOCKET_ENDPOINT, { auth: { token: localStorage.getItem('token') } });
+    socket.on('global_room_user_counts', (counts) => {
+      console.log('Received viewer counts:', counts);
+      setViewerCounts(counts);
+    });
+    return () => socket.disconnect();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -532,6 +544,12 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
             const remainingTime = new Date(item.endTime).getTime() - now.getTime();
             const isUrgent = remainingTime > 0 && remainingTime < 180000; // 3 minutes
 
+            const currentViewers = viewerCounts[`auction_${item._id}`] || 0;
+            if (item._id === 'YOUR_TEST_ITEM_ID') { // Replace with a real ID for testing
+              console.log(`Viewers for ${item._id}:`, currentViewers);
+            }
+            const isHot = currentViewers >= 5;
+
             return (
               <div
                 key={item._id}
@@ -565,81 +583,93 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                       zIndex: 2,
                       width: '100%',
                       display: 'flex',
-                      gap: '16px',
+                      flexDirection: 'column', // Change to column for gauge bar
                     }}
                   >
-                    {/* 상단 뱃지들 (신용 / 즐겨찾기) */}
-                    <div style={badgeStackStyle}>
-                      {item.sellerReputationScore >= 100 && (
-                        <div style={creditBadgeStyle}>
-                          <span role="img" aria-label="trusted">
-                            💎
-                          </span>
-                          <span>신용</span>
-                        </div>
-                      )}
-
-                      {item.isFavorited && (
-                        <div style={favoriteBadgeStyle}>
-                          <span role="img" aria-label="star">
-                            ⭐
-                          </span>
-                          <span>즐겨찾기</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 썸네일 */}
-                    <Link
-                      to={`/auction/${item._id}`}
-                      style={{
-                        textDecoration: 'none',
-                        color: 'inherit',
-                        display: 'flex',
-                        gap: '16px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div style={thumbnailWrapperStyle}>
-                        {item.imagePath ? (
-                          <img
-                            src={`/${item.imagePath}`}
-                            alt={item.title}
-                            style={thumbnailImgStyle}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '12px', color: '#9ca3af' }}>No Image</span>
+                    <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                      {/* 상단 뱃지들 (신용 / 즐겨찾기 / 관전자) */}
+                      <div style={badgeStackStyle}>
+                        {item.sellerReputationScore >= 100 && (
+                          <div style={creditBadgeStyle}>
+                            <span role="img" aria-label="trusted">💎</span>
+                            <span>신용</span>
+                          </div>
+                        )}
+                        {item.isFavorited && (
+                          <div style={favoriteBadgeStyle}>
+                            <span role="img" aria-label="star">⭐</span>
+                            <span>즐겨찾기</span>
+                          </div>
                         )}
                       </div>
-                    </Link>
+                      
+                      {/* 관전자 뱃지 (오른쪽 상단) */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '100px', // Adjusted from 12px to move it down
+                          right: '12px',
+                          backgroundColor: isHot ? '#ef4444' : '#2563eb',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                          zIndex: 3,
+                        }}
+                      >
+                        👀 {currentViewers}명 관전중
+                      </div>
 
-                    {/* 본문 내용 + 푸터 */}
-                    <div style={itemBodyWrapperStyle}>
-                      {/* 상단 정보 (제목 등) */}
-                      <Link to={`/auction/${item._id}`} style={topInfoAreaStyle}>
-                        <h3 style={titleStyle}>{item.title}</h3>
-
-                        <p style={metaTextStyle}>판매자 평판: {item.sellerReputationScore}점</p>
-                        <p style={metaTextStyle}>판매자 UUID: {item.sellerUuid}</p>
-
-                        <p style={priceTextStyle}>
-                          경매 시작가: {Number(item.startPrice).toLocaleString()}원
-                        </p>
-
-                        <p style={endTimeTextStyle}>
-                          마감 시간: {new Date(item.endTime).toLocaleString()}
-                        </p>
+                      {/* 썸네일 */}
+                      <Link
+                        to={`/auction/${item._id}`}
+                        style={{ textDecoration: 'none', color: 'inherit', flexShrink: 0 }}
+                      >
+                        <div style={thumbnailWrapperStyle}>
+                          {item.imagePath ? (
+                            <img src={`/${item.imagePath}`} alt={item.title} style={thumbnailImgStyle} />
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#9ca3af' }}>No Image</span>
+                          )}
+                        </div>
                       </Link>
 
-                      {/* 하단 푸터 (삭제 버튼 등) */}
-                      <div style={cardFooterRowStyle}>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>ID: {item._id}</div>
+                      {/* 본문 내용 */}
+                      <div style={{...itemBodyWrapperStyle, justifyContent: 'flex-start'}}>
+                        <Link to={`/auction/${item._id}`} style={topInfoAreaStyle}>
+                          <h3 style={titleStyle}>{item.title}</h3>
+                          <p style={metaTextStyle}>판매자 평판: {item.sellerReputationScore}점</p>
+                          <p style={priceTextStyle}>경매 시작가: {Number(item.startPrice).toLocaleString()}원</p>
+                          <p style={endTimeTextStyle}>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
+                        </Link>
+                      </div>
+                    </div>
 
+                    {/* 하단 푸터 (게이지 바, 삭제 버튼 등) */}
+                    <div style={{...cardFooterRowStyle, flexDirection: 'column', alignItems: 'stretch'}}>
+                       {/* 게이지바 */}
+                      <div style={{ marginTop: '12px' }}>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div
+                            style={{
+                              width: `${Math.min(currentViewers * 20, 100)}%`,
+                              height: '100%',
+                              background: isHot ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+                              transition: 'width 0.3s ease',
+                            }}
+                          />
+                        </div>
+                        <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                          현재 {currentViewers}명 관전중
+                        </small>
+                      </div>
+
+                      <div style={{...cardFooterRowStyle, justifyContent: 'space-between', width: '100%'}}>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>ID: {item._id}</div>
                         {!isSelectionMode && canDelete && (
-                          <button
-                            onClick={() => handleDeleteItem(item._id)}
-                            style={perItemDeleteBtnStyle}
-                          >
+                          <button onClick={() => handleDeleteItem(item._id)} style={perItemDeleteBtnStyle}>
                             삭제하기
                           </button>
                         )}
@@ -649,7 +679,7 @@ function ItemList({ isLoggedIn, isAdmin, userUuid }) {
                 </div>
               </div>
             );
-          })}
+          })} // end map
         </div>
 
         {/* 페이지네이션 */}

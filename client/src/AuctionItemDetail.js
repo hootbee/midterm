@@ -114,6 +114,7 @@ function AuctionItemDetail() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(null);
+  const [viewerCount, setViewerCount] = useState(0);
   const audioRef = useRef(null);
 
   // 오디오 효과
@@ -211,6 +212,7 @@ function AuctionItemDetail() {
     const socket = io(SOCKET_ENDPOINT, { auth: { token } });
     socketRef.current = socket;
     socket.emit('join_room', id);
+
     socket.on('bid_update', (updatedItem) => {
       if (itemRef.current && updatedItem.currentPrice > itemRef.current.currentPrice) {
         speak(`새 입찰 ${updatedItem.currentPrice}원`);
@@ -222,6 +224,12 @@ function AuctionItemDetail() {
       }
       setItem(updatedItem);
     });
+
+    socket.on('global_room_user_counts', (counts) => {
+      const count = counts[`auction_${id}`] || 0;
+      setViewerCount(count);
+    });
+
     socket.on('bid_error', (err) => alert(`입찰 오류: ${err.message}`));
     return () => socket.disconnect();
   }, [id, token]);
@@ -348,6 +356,9 @@ function AuctionItemDetail() {
         )}
 
         <h2>{item.title}</h2>
+        <p style={{ fontWeight: 600, color: '#ef4444' }}>
+          👥 현재 {viewerCount}명 이 페이지를 보고 있습니다.
+        </p>
         <img src={`/${item.imagePath}`} alt={item.title} style={styles.image} />
         <div
             style={{

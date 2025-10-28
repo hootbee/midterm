@@ -4,11 +4,34 @@ const { logBid, findUserByUuid } = require('./models/userModel');
 const DMMessage = require('./models/dmMessageModel');
 const DMRoom = require('./models/dmRoomModel');
 
+const roomUserCounts = {}; // { auctionId: viewerCount }
+
 // Map to store user UUID to socket ID for direct messaging
 const userSocketMap = new Map(); // userUuid -> socket.id
 
 function initializeSocket(io) {
   io.use(socketAuthMiddleware); // Apply the auth middleware to all connections
+
+  const updateCounts = () => {
+    const rooms = io.sockets.adapter.rooms;
+    const newCounts = {};
+    for (const [roomId, clients] of rooms.entries()) {
+      if (roomId.startsWith('auction_')) {
+        newCounts[roomId] = clients.size;
+      }
+    }
+
+    // Update the global object by removing rooms that no longer exist
+    for (const roomId in roomUserCounts) {
+      if (!newCounts[roomId]) {
+        delete roomUserCounts[roomId];
+      }
+    }
+    // Add or update current rooms
+    Object.assign(roomUserCounts, newCounts);
+
+    io.emit('global_room_user_counts', roomUserCounts);
+  };
 
   io.on('connection', (socket) => {
     const user = socket.user;
@@ -19,8 +42,13 @@ function initializeSocket(io) {
 
     // Handler for joining a room (for auction items)
     socket.on('join_room', (itemId) => {
-      socket.join(itemId);
+      socket.join(itemId); // For bidding logic
       console.log(`${user.email} joined room for item: ${itemId}`);
+
+      const roomName = `auction_${itemId}`;
+      socket.join(roomName); // For viewer count logic
+      console.log(`✅ ${socket.id} joined viewer room: ${roomName}`);
+      updateCounts();
     });
 
     // Handler for joining a DM room
@@ -41,7 +69,6 @@ function initializeSocket(io) {
           return socket.emit('dm:error', { message: 'DM room not found.' });
         }
 
-        // Ensure sender is a participant in the room
         if (!dmRoom.participants.includes(user.uuid)) {
           return socket.emit('dm:error', { message: 'Not authorized to send message in this room.' });
         }
@@ -55,13 +82,11 @@ function initializeSocket(io) {
         await newMessage.save();
         console.log('DMMessage saved:', newMessage._id);
 
-        // Update last message in DM room
         dmRoom.lastMessage = newMessage._id;
         dmRoom.updatedAt = new Date();
         await dmRoom.save();
         console.log('DMRoom lastMessage updated for room:', dmRoom._id);
 
-        // Emit message to all participants in the room
         io.to(roomId).emit('dm:message', newMessage);
 
         console.log(`DM message sent in room ${roomId} from ${user.uuid} to ${receiverUuid}: ${content}`);
@@ -74,7 +99,6 @@ function initializeSocket(io) {
     // Handler for a new bid
     socket.on('new_bid', async ({ itemId, bidAmount }) => {
       try {
-        // --- Balance Check ---
         const bidder = await findUserByUuid(user.uuid);
         if (!bidder) {
             return socket.emit('bid_error', { message: '사용자 정보를 찾을 수 없습니다.' });
@@ -85,7 +109,6 @@ function initializeSocket(io) {
 
         const item = await findById(itemId);
 
-        // --- Validation ---
         if (!item) {
           return socket.emit('bid_error', { message: '아이템을 찾을 수 없습니다.' });
         }
@@ -99,7 +122,6 @@ function initializeSocket(io) {
           return socket.emit('bid_error', { message: `입찰가는 현재 최고가(${item.currentPrice.toLocaleString()}원)보다 높아야 합니다.` });
         }
 
-        // --- Anti-sniping rule ---
         const now = new Date();
         const endTime = new Date(item.endTime);
         if (endTime.getTime() - now.getTime() < 60000) { // Less than 1 minute
@@ -107,7 +129,6 @@ function initializeSocket(io) {
           console.log(`Auction time extended for item ${itemId}`);
         }
 
-        // --- Update DB ---
         item.currentPrice = bidAmount;
         item.highestBidderUuid = user.uuid;
         item.bids.push({ bidderUuid: user.uuid, amount: bidAmount });
@@ -115,7 +136,6 @@ function initializeSocket(io) {
         const updatedItem = await item.save();
         console.log(`New bid of ${bidAmount} for item ${itemId} by ${user.email}`);
 
-        // --- Log bid to MariaDB for audit ---
         await logBid({
           auction_item_id: itemId,
           seller_uuid: item.sellerUuid,
@@ -123,7 +143,6 @@ function initializeSocket(io) {
           bid_amount: bidAmount,
         });
 
-        // --- Broadcast update to all in the room ---
         io.to(itemId).emit('bid_update', updatedItem);
 
       } catch (error) {
@@ -135,6 +154,7 @@ function initializeSocket(io) {
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${user.email}`);
       userSocketMap.delete(user.uuid); // Remove user from map on disconnect
+      setTimeout(updateCounts, 500); // Update counts after a short delay
     });
   });
 }
