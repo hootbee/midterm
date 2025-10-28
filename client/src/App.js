@@ -37,6 +37,7 @@ function App() {
           <Link to="/dm"><button style={{ marginLeft: '10px' }}>DM</button></Link>
           <Link to="/announcements"><button style={{ marginLeft: '10px' }}>공지사항</button></Link>
           <Link to="/calendar"><button style={{ marginLeft: '10px' }}>캘린더</button></Link>
+          <img src="/Aucademy.png" alt="Aucademy Logo" className="logo-rotate" />
 
         </div>
 

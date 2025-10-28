@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
 import BidPredictionBox from './BidPredictionBox';
 import BidHistoryChart from './BidHistoryChart';
+import CheerLayer from './CheerLayer';
 import './AuctionTension.css';
 import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
@@ -115,6 +116,8 @@ function AuctionItemDetail() {
   const [error, setError] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(null);
   const [viewerCount, setViewerCount] = useState(0);
+  const [lastCheerBurstId, setLastCheerBurstId] = useState(0);
+  const [canCheer, setCanCheer] = useState(true);
   const audioRef = useRef(null);
 
   // 오디오 효과
@@ -228,6 +231,10 @@ function AuctionItemDetail() {
     socket.on('global_room_user_counts', (counts) => {
       const count = counts[`auction_${id}`] || 0;
       setViewerCount(count);
+    });
+
+    socket.on('cheer_broadcast', () => {
+      setLastCheerBurstId(Date.now());
     });
 
     socket.on('bid_error', (err) => alert(`입찰 오류: ${err.message}`));
@@ -482,6 +489,38 @@ function AuctionItemDetail() {
             </div>
         )}
 
+        {/* 응원 버튼 */}
+        <button
+          onClick={() => {
+            if (!canCheer) return;
+            setCanCheer(false);
+            setTimeout(() => setCanCheer(true), 500);
+            if (socketRef.current) {
+              socketRef.current.emit('cheer', { itemId: id });
+            }
+            setLastCheerBurstId(Date.now());
+          }}
+          disabled={!canCheer}
+          style={{
+            backgroundColor: '#fff1f2',
+            border: '1px solid #f87171',
+            color: '#dc2626',
+            fontWeight: 600,
+            padding: '8px 12px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            marginTop: '12px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 4px 10px rgba(220,38,38,0.15)',
+            opacity: canCheer ? 1 : 0.6,
+          }}
+        >
+          <span role="img" aria-label="cheer">🔥</span>
+          <span>응원 보내기</span>
+        </button>
+
         {/* 판매자 전용 */}
         {isSeller && (
             <div style={{ marginTop: '10px' }}>
@@ -567,6 +606,8 @@ function AuctionItemDetail() {
         </div>
 
         <CommentSection itemId={id} />
+
+        <CheerLayer incomingCheer={lastCheerBurstId} />
       </div>
   );
 }

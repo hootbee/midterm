@@ -81,6 +81,22 @@
   background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
   opacity: 0.25;
   mix-blend-mode: overlay;
-  animation: flameFlow 6s linear infinite;
   pointer-events: none;
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.logo-rotate {
+  animation: logo-spin infinite 10s linear; /* Faster rotation */
+  width: 180px; /* Larger size */
+  height: auto;
+  margin-left: 20px;
+  vertical-align: middle;
 }

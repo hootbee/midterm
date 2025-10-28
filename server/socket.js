@@ -57,6 +57,10 @@ function initializeSocket(io) {
       console.log(`${user.email} joined DM room: ${roomId}`);
     });
 
+    socket.on('cheer', ({ itemId }) => {
+      io.to(itemId).emit('cheer_broadcast');
+    });
+
     // Handler for sending a DM message
     socket.on('dm:message', async ({ roomId, receiverUuid, content }) => {
       try {

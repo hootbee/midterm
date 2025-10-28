@@ -1,0 +1,80 @@
+.cheer-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+    font-size: 28px;
+    perspective: 800px;
+}
+
+.cheer-flame {
+    position: absolute;
+    bottom: 40px;
+    animation: floatUp var(--duration, 2s) ease-out forwards, flicker 0.15s infinite;
+    will-change: transform, opacity;
+    user-select: none;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.8));
+}
+
+/* 🔥 불꽃 상승 애니메이션 */
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) translateX(0) scale(var(--scale, 1)) rotate(0deg);
+        opacity: 1;
+    }
+    30% {
+        transform: translateY(-25vh)
+        translateX(calc(var(--horizontal-drift, 0px) / 3))
+        rotate(calc(var(--rotation-end, 0deg) / 3))
+        scale(calc(var(--scale, 1) * 1.3));
+        opacity: 0.95;
+    }
+    60% {
+        transform: translateY(-55vh)
+        translateX(calc(var(--horizontal-drift, 0px) / 1.5))
+        rotate(calc(var(--rotation-end, 0deg) / 1.5))
+        scale(calc(var(--scale, 1) * 1.1));
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-90vh)
+        translateX(var(--horizontal-drift, 0px))
+        rotate(var(--rotation-end, 0deg))
+        scale(calc(var(--scale, 1) * 0.8));
+        opacity: 0;
+    }
+}
+
+/* 🔥 불빛 깜박임 */
+@keyframes flicker {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(255,120,0,0.9)); }
+    50%      { filter: drop-shadow(0 0 12px rgba(255,30,0,1)); }
+}
+
+/* ✨ 잔불 (Spark Particle) */
+.cheer-spark {
+    position: absolute;
+    bottom: 40px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,200,100,1) 0%, rgba(255,0,0,0) 70%);
+    animation: sparkUp var(--spark-duration, 1.6s) ease-out forwards;
+    opacity: 0.7;
+}
+
+@keyframes sparkUp {
+    0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-70vh) translateX(var(--spark-drift, 40px)) scale(0);
+        opacity: 0;
+    }
+}
