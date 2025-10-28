@@ -1,0 +1,61 @@
+/* =================================
+   시간 압박 효과 (Countdown Tension FX)
+   ================================= */
+
+/* --- 입찰 카드 글로우 효과 --- */
+
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+}
+
+@keyframes midPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(255, 0, 0, 0.6); }
+  50% { transform: scale(1.01); box-shadow: 0 0 16px rgba(255, 0, 0, 0.7); }
+}
+
+@keyframes hardPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(255, 0, 0, 0.9), 0 0 24px rgba(255, 80, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 24px rgba(255, 0, 0, 1), 0 0 48px rgba(255, 80, 0, 0.8);
+  }
+}
+
+.tension-soft {
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+  animation: softPulse 1s ease-in-out infinite;
+  border-color: rgba(255, 100, 100, 0.8) !important;
+}
+
+.tension-mid {
+  background-image: linear-gradient(rgba(255, 240, 210, 0.3), rgba(255, 220, 200, 0.1));
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+  animation: midPulse 0.5s ease-in-out infinite;
+  border-color: rgba(255, 80, 80, 0.9) !important;
+}
+
+.tension-hard {
+  background-image: linear-gradient(rgba(255, 200, 180, 0.4), rgba(255, 180, 150, 0.2));
+  animation: hardPulse 0.3s ease-in-out infinite;
+  border-color: rgba(255, 0, 0, 1) !important;
+}
+
+
+/* --- 시간 텍스트 흔들림 효과 --- */
+
+@keyframes timeShake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(1px, -1px); }
+  50%  { transform: translate(-1px, 1px); }
+  75%  { transform: translate(1px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.time-shake {
+  animation: timeShake 0.15s infinite;
+  display: inline-block; /* transform을 적용하기 위해 */
+}

@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import CommentSection from './CommentSection';
 import BidPredictionBox from './BidPredictionBox';
 import BidHistoryChart from './BidHistoryChart';
+import './AuctionTension.css';
 import { SOCKET_ENDPOINT, buildApiUrl } from './apiConfig';
 
 /* ===================== 공통 스타일 ===================== */
@@ -26,6 +27,7 @@ const styles = {
     padding: '20px',
     marginTop: '20px',
     backgroundColor: '#f8f9fa',
+    transition: 'all 0.3s ease-in-out', // 부드러운 전환 효과
   },
   button: {
     border: 'none',
@@ -66,12 +68,18 @@ const authorizedFetch = async (url, options = {}) => {
 };
 
 /* ===================== Countdown 컴포넌트 ===================== */
-const Countdown = ({ endTime }) => {
+const Countdown = ({ endTime, onTick, className }) => {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
       const diff = new Date(endTime) - new Date();
+      const secondsLeft = Math.floor(diff / 1000);
+
+      if (onTick) {
+        onTick(secondsLeft > 0 ? secondsLeft : 0);
+      }
+
       if (diff > 0) {
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
         const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
@@ -84,9 +92,9 @@ const Countdown = ({ endTime }) => {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [endTime, onTick]);
 
-  return <span>{timeLeft}</span>;
+  return <span className={className}>{timeLeft}</span>;
 };
 
 /* ===================== 메인 컴포넌트 ===================== */
@@ -105,6 +113,39 @@ function AuctionItemDetail() {
   const [showReportForm, setShowReportForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState(null);
+  const [secondsLeft, setSecondsLeft] = useState(null);
+  const audioRef = useRef(null);
+
+  // 오디오 효과
+  useEffect(() => {
+    // 컴포넌트 마운트 시 오디오 객체 생성, 언마운트 시 정리
+    audioRef.current = new Audio('/tick.mp3');
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (secondsLeft === 10) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0; // 다시 재생하기 위해 오디오를 처음으로 되감기
+        audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+      }
+    } else if (secondsLeft === 0) {
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause();
+      }
+    }
+  }, [secondsLeft]);
+
+  const getUrgencyClass = (seconds) => {
+    if (seconds === null || seconds > 30) return '';
+    if (seconds > 10) return 'tension-soft';
+    if (seconds > 5) return 'tension-mid';
+    return 'tension-hard';
+  };
 
   const token = localStorage.getItem('token');
   let currentUserUuid = null;
@@ -276,6 +317,7 @@ function AuctionItemDetail() {
   const isWinner = item.winnerUuid === currentUserUuid;
   const canBid = token && item.status === 'active' && !isSeller && !isAuctionOver;
 
+
   /* ===================== UI ===================== */
   if (isEditMode)
     return <EditForm item={item} onUpdate={handleUpdate} onCancel={() => setIsEditMode(false)} />;
@@ -323,7 +365,11 @@ function AuctionItemDetail() {
         <p>판매자 평판: {item.sellerReputationScore}점</p>
         <h3>현재 최고 입찰가: {item.currentPrice.toLocaleString()}원</h3>
         <p>마감 시간: {new Date(item.endTime).toLocaleString()}</p>
-        <p>남은 시간: <Countdown endTime={item.endTime} /></p>
+        <p>남은 시간: <Countdown
+            endTime={item.endTime}
+            onTick={setSecondsLeft}
+            className={secondsLeft !== null && secondsLeft <= 10 ? 'time-shake' : ''}
+        /></p>
         {timeExtended && <p style={{ color: 'red' }}>⏱ 마감 시간이 연장되었습니다!</p>}
 
         {/* ✅ 상태 표시 부분 수정 */}
@@ -372,6 +418,7 @@ function AuctionItemDetail() {
         {/* 입찰 섹션 */}
         {canBid && (
             <div
+                className={getUrgencyClass(secondsLeft)}
                 style={{
                   ...styles.biddingCard,
                   backgroundColor: '#e8f4ff',
